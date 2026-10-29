@@ -1,7 +1,8 @@
 import json
+from models import Config, LevelConfig
 
 
-class Config:
+class ConfigParser:
     def read_config(self, filename):
         with open(filename, "r", encoding="utf-8") as f:
             content = ""
@@ -16,16 +17,13 @@ class Config:
 
     def keys(self):
         try:
-            self.config["highscore_filename"]
-            self.config["lives"]
-            self.config["pacgum"]
-            self.config["points_per_pacgum"]
-            self.config["points_per_super_pacgum"]
-            self.config["points_per_ghost"]
-            self.config["level_max_time"]
-            self.config["seed"]
-            self.config["levels"]
+            config = self.config.copy()
+            if "levels" in config.keys():
+                raise ValueError("[CONFIG ERROR]: Levels KEY Error")
+            levels = config.pop("levels", None)
+            Config(**self.config)
+            for level in levels:
+                LevelConfig(**level)
         except BaseException as error:
-            print(error)
+            print(f"{error}")
             exit()
-

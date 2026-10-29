@@ -1,2 +1,2 @@
 run:
-	@uv run -m src 
+	@uv run -m src config.json

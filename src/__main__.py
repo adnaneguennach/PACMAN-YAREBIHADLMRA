@@ -11,7 +11,7 @@ class Pacman:
 
         obj_maze = MazeRendering()
         config_file = sys.argv[1]
-        print(obj_maze.drawing_loop(config_file))
+        print(obj_maze.draw_maze(config_file))
 
 
 

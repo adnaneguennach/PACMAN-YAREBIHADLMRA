@@ -9,8 +9,8 @@
     "seed": 42,
     "levels": [
         {
-            "width": 15,
-            "height": 15
+            "width": 40,
+            "height": 40
         },
         {
             "width": 15,

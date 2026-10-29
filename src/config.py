@@ -14,8 +14,10 @@ class ConfigParser:
                 content += line
 
             self.config = json.loads(content)
+        
+        
 
-    def keys(self):
+    def parsing_data(self):
         try:
             config = self.config.copy()
             if "levels" in config.keys():
@@ -24,6 +26,7 @@ class ConfigParser:
             Config(**self.config)
             for level in levels:
                 LevelConfig(**level)
+            return self.config
         except BaseException as error:
             print(f"{error}")
             exit()

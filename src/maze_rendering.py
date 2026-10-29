@@ -1,5 +1,6 @@
 from mazegenerator import MazeGenerator   
 import pygame
+from config import ConfigParser
 
 class MazeRendering:
     def __init__(self, lvl_width, lvl_height, tile_size):
@@ -8,8 +9,11 @@ class MazeRendering:
         self.lvl_height = lvl_height
     
 
-    def drawing_loop(self, lvl_height, lvl_width):
-        pass
+    def drawing_loop(self):
+        # pass
+        parser_obj = ConfigParser()
+        return parser_obj.parsing_data()
+
 
     def draw_maze(self):
         maze_width = self.lvl_width * tile_size
@@ -37,3 +41,4 @@ class MazeRendering:
         return self.maze_grid
 
 
+obj = MazeRendering

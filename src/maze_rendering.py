@@ -3,16 +3,36 @@ import pygame
 from .config import ConfigParser
 
 class MazeRendering:
-    def __init__(self, lvl_width, lvl_height, tile_size):
-        self.maze_grid = MazeGenerator(size = (lvl_width, lvl_height), perfect = False).maze
-        self.lvl_width = lvl_width
-        self.lvl_height = lvl_height
-    
+    def __init__(self):
+        # self.maze_grid = MazeGenerator(size = (lvl_width, lvl_height), perfect = False).maze
+        self.screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
+        self.screen_width = self.screen.get_width()
+        self.screen_height = self.screen.get_height()
+        self.tile_size = 20
 
     def drawing_loop(self, config_path):
         # pass
         parser_obj = ConfigParser(config_path)
-        return parser_obj.parsing_data()
+        parsed_data = parser_obj.parsing_data()
+        levels = parsed_data["levels"]
+        actual_lvl = 0
+
+        while actual_lvl < len(levels):
+            maze_grid = MazeGenerator(size = (levels[actual_lvl]["width"], levels[actual_lvl]["height"]), perfect = False).maze
+            maze_width = levels[actual_lvl]["width"] * self.tile_size
+            maze_height = levels[actual_lvl]["height"] * self.tile_size
+            offset_x = (self.screen_width - maze_width) // 2
+            offset_y = (self.screen_height - maze_height) // 2
+
+            for y in range(levels[actual_lvl]["height"]):
+                for x in range(levels[actual_lvl]["width"]):
+                    grid_cell = maze_grid[y][x]
+                    px = offset_x
+                    py = offset_y
+                    
+                    print(px, py)
+        # return levels
+
 
 
     def draw_maze(self):

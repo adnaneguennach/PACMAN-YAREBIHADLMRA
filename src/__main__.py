@@ -9,7 +9,7 @@ class Pacman:
         if len(sys.argv) < 1:
             return "Config file not found"
 
-        obj_maze = MazeRendering(40, 40, 10)
+        obj_maze = MazeRendering()
         config_file = sys.argv[1]
         print(obj_maze.drawing_loop(config_file))
 

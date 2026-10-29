@@ -1,6 +1,6 @@
 from mazegenerator import MazeGenerator   
 import pygame
-from config import ConfigParser
+from .config import ConfigParser
 
 class MazeRendering:
     def __init__(self, lvl_width, lvl_height, tile_size):
@@ -34,11 +34,9 @@ class MazeRendering:
                 if event.type == pygame.QUIT:
                     running = False
             
-            for y in range(self.)
+            # for y in range(self.)
             screen.fill("purple")
             pygame.display.flip()
             clock.tick(60)
         return self.maze_grid
 
-
-obj = MazeRendering

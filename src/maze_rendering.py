@@ -9,9 +9,9 @@ class MazeRendering:
         self.lvl_height = lvl_height
     
 
-    def drawing_loop(self):
+    def drawing_loop(self, config_path):
         # pass
-        parser_obj = ConfigParser()
+        parser_obj = ConfigParser(config_path)
         return parser_obj.parsing_data()
 
 

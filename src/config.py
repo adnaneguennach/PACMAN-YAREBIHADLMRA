@@ -3,8 +3,9 @@ from .models import Config, LevelConfig
 
 
 class ConfigParser:
-    def __init__(self):
+    def __init__(self, config_path):
         self.config = None
+        self.path_config = config_path
 
     def read_config(self, filename):
         with open(filename, "r", encoding="utf-8") as f:
@@ -22,7 +23,9 @@ class ConfigParser:
 
     def parsing_data(self):
         try:
-            self.read_config("config.json")
+            # print(self.path_config)
+            # exit()
+            self.read_config(self.path_config)
             config = self.config.copy()
             if not "levels" in config.keys():
                 raise ValueError("[CONFIG ERROR]: Levels KEY Error")

@@ -7,6 +7,10 @@ class MazeRendering:
         self.lvl_width = lvl_width
         self.lvl_height = lvl_height
     
+
+    def drawing_loop(self, lvl_height, lvl_width):
+        pass
+
     def draw_maze(self):
         maze_width = self.lvl_width * tile_size
         maze_height = self.lvl_height * tile_size
@@ -18,10 +22,15 @@ class MazeRendering:
         screen_width = screen.get_width()
         screen_height = screen.get_height()
 
+        offset_x = (screen_width - maze_width) // 2 # (1920 - 800) = 1120 / 2 = 560
+        offset_y = (screen_height - maze_height) // 2 
+
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+            
+            for y in range(self.)
             screen.fill("purple")
             pygame.display.flip()
             clock.tick(60)

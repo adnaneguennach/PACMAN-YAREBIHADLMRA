@@ -1,5 +1,8 @@
+from src.maze_rendering import Maze
+
+
 class Player:
-    def __init__(self, x, y, pixel_x, pixel_y, speed, maze_obj):
+    def __init__(self, x, y, pixel_x, pixel_y, speed, maze_obj: Maze):
         self.cell_x = x
         self.cell_y = y
         self.pixel_x = pixel_x
@@ -19,4 +22,5 @@ class Player:
         self.end_angle = 340
 
     def update(self, deltatime):
-        step = self.speed
+        step = self.speed * deltatime * self.maze_obj.tile
+        print(step)

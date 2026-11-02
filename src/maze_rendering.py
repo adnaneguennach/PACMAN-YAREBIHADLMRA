@@ -21,3 +21,14 @@ class Maze:
                 ):
                     if cell & bit:
                         pygame.draw.rect(self.screen, "blue", rect)
+
+    # adnane implemente hadi 3awd
+    def cell_to_pixel(self, x, y):
+        pix_x = self.offset_x + (x * self.cell_size)
+        pix_y = self.offset_y + (y * self.cell_size)
+        return pix_x, pix_y
+
+    def pixel_to_cell(self, pix_x, pix_y):
+        x = (pix_x - self.offset_x) // self.cell_size
+        y = (pix_y - self.offset_y) // self.cell_size
+        return x, y

@@ -13,7 +13,7 @@ class GameEngine:
             size=(self.level["width"], self.level["height"]), perfect=False
         ).maze
         self.maze = Maze(self.screen, self.grid)
-        # self.player = Player()
+        self.player = Player()
 
     def update_playing(self, deltatime):
         self.player.update(deltatime)

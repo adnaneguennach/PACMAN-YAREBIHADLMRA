@@ -13,7 +13,11 @@ class GameEngine:
             size=(self.level["width"], self.level["height"]), perfect=False
         ).maze
         self.maze = Maze(self.screen, self.grid)
-        self.player = Player()
+
+        # need to get corner of the maze
+        cx, cy = 0, 0
+        pcx, pcy = self.maze.cell_to_pixel(cx, cy)
+        self.player = Player(cx, cy, pcx, pcy, 4, self.maze)
 
     def update_playing(self, deltatime):
         self.player.update(deltatime)

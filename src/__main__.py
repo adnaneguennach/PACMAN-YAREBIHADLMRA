@@ -13,7 +13,7 @@ class Pacman:
 
         config_file = sys.argv[1]
         obj_maze = GameEngine(config_file)
-        print(obj_maze.draw_maze())
+        obj_maze.draw_maze()
 
 
 if __name__ == "__main__":

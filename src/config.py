@@ -18,8 +18,6 @@ class ConfigParser:
                 content += line
 
             self.config = json.loads(content)
-        
-        
 
     def parsing_data(self):
         try:
@@ -27,7 +25,7 @@ class ConfigParser:
             # exit()
             self.read_config(self.path_config)
             config = self.config.copy()
-            if not "levels" in config.keys():
+            if not ("levels" in config.keys()):
                 raise ValueError("[CONFIG ERROR]: Levels KEY Error")
             levels = config.pop("levels", None)
             Config(**self.config)

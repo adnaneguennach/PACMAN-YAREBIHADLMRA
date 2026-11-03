@@ -1,21 +1,16 @@
-from src.game_engine import GameEngine
-from src.player import Player
 import sys
+
+from src.game_engine import GameEngine
 
 
 class Pacman:
-    def __init__(self):
-        pass
-
     def main_loop(self):
-        if len(sys.argv) < 1:
-            return "Config file not found"
+        if len(sys.argv) < 2:
+            print("Error: config file not provided")
+            sys.exit(1)
 
-        config_file = sys.argv[1]
-        obj_maze = GameEngine(config_file)
-        obj_maze.draw_maze()
+        GameEngine(sys.argv[1]).run()
 
 
 if __name__ == "__main__":
-    pac_obj = Pacman()
-    pac_obj.main_loop()
+    Pacman().main_loop()

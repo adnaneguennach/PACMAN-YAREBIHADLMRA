@@ -8,15 +8,15 @@ class Maze:
         self.screen_height = screen.get_height()
         self.grid = grid
         self.cell_size = tile
-        self.width = (self.screen_width - len(grid[0]) * tile) // 2
-        self.height = (self.screen_height - len(grid) * tile) // 2
-        self.offset_x = (self.screen_width - self.width) // 2
-        self.offset_y = (self.screen_height - self.height) // 2
+        self.maze_width = (self.screen_width - len(grid[0]) * tile) // 2
+        self.maze_height = (self.screen_height - len(grid) * tile) // 2
+        self.offset_x = (self.screen_width - self.maze_width) // 2
+        self.offset_y = (self.screen_height - self.maze_height) // 2
 
     def draw(self):
         for y, row in enumerate(self.grid):
             for x, cell in enumerate(row):
-                px, py = self.width + (x * self.cell_size), self.height + (
+                px, py = self.maze_width + (x * self.cell_size), self.maze_height + (
                     y * self.cell_size
                 )
                 for bit, rect in (
@@ -28,7 +28,7 @@ class Maze:
                     if cell & bit:
                         pygame.draw.rect(self.screen, "blue", rect)
 
-    # adnane implemente hadi 3awd
+    
     def cell_to_pixel(self, x, y):
         pix_x = self.offset_x + (x * self.cell_size)
         pix_y = self.offset_y + (y * self.cell_size)

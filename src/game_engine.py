@@ -2,7 +2,7 @@ import pygame
 from mazegenerator import MazeGenerator
 
 from src.config import ConfigParser
-from src.maze_rendering import EAST, NORTH, SOUTH, WEST, Maze
+from src.maze_rendering import EAST, NORTH, SOUTH, WEST, MazeRendering
 from src.player import Player
 
 FPS = 60
@@ -27,10 +27,10 @@ class GameEngine:
             size=(level["width"], level["height"]), perfect=False
         ).maze
 
-        self.maze = Maze(walls, CELL_SIZE, self.screen.get_size())
-        x, y = self.maze.center
-        px, py = self.maze.cell_to_pixel(x, y)
-        self.player = Player(x, y, px, py, PLAYER_SPEED, self.maze)
+        self.maze = MazeRendering(walls, CELL_SIZE, self.screen.get_size())
+        x, y = self.maze.maze_adapter.center
+        px, py = self.maze.maze_adapter.cell_to_pixel(x, y)
+        self.player = Player(x, y, px, py, PLAYER_SPEED, self.maze.maze_adapter)
 
     def run(self):
         clock = pygame.time.Clock()

@@ -2,14 +2,14 @@ import math
 
 import pygame
 
-from src.maze_rendering import Maze
+from src.maze_adapter import MazeAdapter
 
 
 class Player:
     DIRECTION_OFFSETS = {1: (0, -1), 2: (1, 0), 4: (0, 1), 8: (-1, 0)}
     DIRECTION_ANGLES = {1: 270, 2: 0, 4: 90, 8: 180}
 
-    def __init__(self, x, y, pixel_x, pixel_y, speed, maze_obj: Maze):
+    def __init__(self, x, y, pixel_x, pixel_y, speed, maze_obj: MazeAdapter):
         self.cell_x = x
         self.cell_y = y
         self.pixel_x = pixel_x

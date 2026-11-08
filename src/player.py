@@ -1,83 +1,94 @@
 import math
-
 import pygame
-
-from src.maze_adapter import MazeAdapter
+from src.maze_rendering import Maze
 
 
 class Player:
-    DIRECTION_OFFSETS = {1: (0, -1), 2: (1, 0), 4: (0, 1), 8: (-1, 0)}
     DIRECTION_ANGLES = {1: 270, 2: 0, 4: 90, 8: 180}
 
-    def __init__(self, x, y, pixel_x, pixel_y, speed, maze_obj: MazeAdapter):
-        self.cell_x = x
-        self.cell_y = y
-        self.pixel_x = pixel_x
-        self.pixel_y = pixel_y
+    def __init__(self, x, y, speed, maze: Maze):
+        self.maze = maze
+        self.x = x
+        self.y = y
+        self.px, self.py = self.maze.cell_to_pixel(self.x, self.y)
         self.speed = speed
-        self.maze_obj = maze_obj
 
-        self.current_dir = None
+        self.target_x = self.x
+        self.target_y = self.y
+        self.target_px = self.px
+        self.target_py = self.py
         self.next_dir = None
+        self.current_dir = None
 
-        self.target_cell_x = x
-        self.target_cell_y = y
-        self.target_px = pixel_x
-        self.target_py = pixel_y
-
-        self.start_angle = 20
-        self.end_angle = 340
-
-    def get_cor(self, direction):
-        return self.DIRECTION_OFFSETS[direction]
+        self.player_images = [
+            "assets/player_images/1.png",
+            "assets/player_images/2.png",
+            "assets/player_images/3.png",
+            "assets/player_images/4.png",
+        ]
+        self.var = 0
+        self.index = 0
 
     def update(self, deltatime):
-        step = self.speed * deltatime * self.maze_obj.cell_size
-        dx = self.target_px - self.pixel_x
-        dy = self.target_py - self.pixel_y
-        dist = (dx ** 2 + dy ** 2) ** 0.5
-
+        step = self.speed * self.maze.cell_size * deltatime
+        dx = self.target_px - self.px
+        dy = self.target_py - self.py
+        dist = (dx**2 + dy**2) ** 0.5
         if dist <= step:
-            self.pixel_x = self.target_px
-            self.pixel_y = self.target_py
-            self.cell_x = self.target_cell_x
-            self.cell_y = self.target_cell_y
-            if self.next_dir and self.maze_obj.can_move(
-                self.cell_x, self.cell_y, self.next_dir
+            self.px = self.target_px
+            self.py = self.target_py
+            self.x = self.target_x
+            self.y = self.target_y
+
+            if self.next_dir is not None and self.maze.can_move(
+                self.x, self.y, self.next_dir
             ):
                 self.current_dir = self.next_dir
                 self.next_dir = None
-
-            if self.current_dir and self.maze_obj.can_move(
-                self.cell_x, self.cell_y, self.current_dir
+            if self.current_dir is not None and self.maze.can_move(
+                self.x, self.y, self.current_dir
             ):
-                dir_x, dir_y = self.get_cor(self.current_dir)
-                self.target_cell_x = self.cell_x + dir_x
-                self.target_cell_y = self.cell_y + dir_y
-                self.target_px, self.target_py = (
-                    self.maze_obj.cell_to_pixel(
-                        self.target_cell_x, self.target_cell_y
-                    )
+                nx, ny = self.maze.get_cor(self.current_dir)
+                self.target_x = self.x + nx
+                self.target_y = self.y + ny
+                self.target_px, self.target_py = self.maze.cell_to_pixel(
+                    self.target_x, self.target_y
                 )
 
         else:
-            self.pixel_x += (dx / dist) * step
-            self.pixel_y += (dy / dist) * step
+            self.px += (dx / dist) * step
+            self.py += (dy / dist) * step
 
-    def draw(self, screen):
-        half = self.maze_obj.cell_size // 2
-        center_x = self.pixel_x + half
-        center_y = self.pixel_y + half
-        radius = half * 0.8
-        facing = self.DIRECTION_ANGLES.get(self.current_dir, 0)
-
-        points = [(center_x, center_y)]
-        for angle in range(self.start_angle, self.end_angle + 1, 10):
-            rad = math.radians(angle + facing)
-            points.append(
-                (
-                    center_x + radius * math.cos(rad),
-                    center_y + radius * math.sin(rad),
-                )
+    def draw(self, screen, player_png):
+        self.spirit = pygame.image.load(player_png)
+        self.spirit = pygame.transform.scale(
+            self.spirit,
+            (
+                self.maze.cell_size - self.maze.cell_size // 4,
+                self.maze.cell_size - self.maze.cell_size // 4,
+            ),
+        )
+        if self.current_dir == 2:
+            pass
+        elif self.current_dir == 1:
+            self.spirit = pygame.transform.rotate(self.spirit, 90)
+        elif self.current_dir == 4:
+            self.spirit = pygame.transform.rotate(self.spirit, 270)
+        elif self.current_dir == 8:
+            self.spirit = pygame.transform.flip(self.spirit, True, True)
+        screen.blit(
+            self.spirit,
+            (
+                self.px + self.maze.cell_size // 6,
+                self.py + self.maze.cell_size // 6
             )
-        pygame.draw.polygon(screen, "yellow", points)
+        )
+
+    def draw_and_switch(self, screen, deltatime):
+        self.var += deltatime
+        if self.var >= 0.1:
+            self.var = 0
+            self.index = (self.index + 1) % len(self.player_images)
+            self.draw(screen, self.player_images[self.index])
+        else:
+            self.draw(screen, self.player_images[self.index])

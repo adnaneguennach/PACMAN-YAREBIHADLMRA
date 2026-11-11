@@ -19,8 +19,7 @@ class Ghost:
         self.target_px = self.px
         self.target_py = self.py
         self.seen = deque()
-
-        self.range = []
+        self.player_detectet_in_zone = False
 
     def _update_range(self):
         self.range = []
@@ -41,6 +40,12 @@ class Ghost:
         dy = self.py - player.py
         dist = (dx**2 + dy**2) ** 0.5
         return dist <= self.maze.cell_size // 2
+
+    def _player_in_zone(self, player: Player):
+        if (player.x, player.y) in self.range:
+            self.player_detectet_in_zone = True
+        else:
+            self.player_detectet_in_zone = False
 
     def random_move(self, deltatime, player: Player):
         if self._touching_player(player):
@@ -101,12 +106,12 @@ class Ghost:
             )
             if not next_step:
                 return
-
-            nx, ny = self.maze.get_dir(*next_step)
+            x, y = next_step
+            nx, ny = self.maze.get_dir(x, y, self.x, self.y)
             self.target_x = self.x + nx
             self.target_y = self.y + ny
             self.target_px, self.target_py = self.maze.cell_to_pixel(
-                self.target_px, self.target_py
+                self.target_x, self.target_y
             )
         else:
             self.px += (dx / dist) * step
@@ -114,9 +119,12 @@ class Ghost:
 
 
     def update(self, deltatime, player: Player):
-        # if player_detectet_in_zone:
-        #     self.chassing(deltatime, player)
-        self.random_move(deltatime, player)
+        self._update_range()
+        self._player_in_zone(player)
+        if self.player_detectet_in_zone:
+            self.chassing(deltatime, player)
+        if not self.player_detectet_in_zone:
+            self.random_move(deltatime, player)
 
     def draw(self, screen, ghost_png):
         self.spirite = pygame.image.load(ghost_png)

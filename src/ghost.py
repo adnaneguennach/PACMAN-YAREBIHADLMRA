@@ -11,6 +11,8 @@ class Ghost:
         self.maze = maze
         self.x = x
         self.y = y
+        self.default_x = x
+        self.default_y = y
         self.px, self.py = self.maze.cell_to_pixel(self.x, self.y)
         self.speed = speed
 
@@ -18,8 +20,11 @@ class Ghost:
         self.target_y = y
         self.target_px = self.px
         self.target_py = self.py
+
         self.seen = deque()
         self.player_detectet_in_zone = False
+        self.scared = False
+        self.range = []
 
     def random_move(self, deltatime, player: Player):
         if Tools._touching_player(self, player):
@@ -79,9 +84,10 @@ class Ghost:
                 (self.x, self.y), (player.x, player.y), self.maze
             )
             if not next_step:
+                # makil9ach path f l7ala dyal lghost w lplayer f nefs cell
                 return
             x, y = next_step
-            nx, ny = self.maze.get_dir(x, y, self.x, self.y)
+            nx, ny = self.maze.get_dir(self.x, self.y, x, y)
             self.target_x = self.x + nx
             self.target_y = self.y + ny
             self.target_px, self.target_py = self.maze.cell_to_pixel(
@@ -92,13 +98,53 @@ class Ghost:
             self.py += (dy / dist) * step
 
 
+
+    def running(self, deltatime, player: Player):
+        if (self.x, self.y) in self.range:
+            step = self.speed * deltatime * self.maze.cell_size
+            dx = self.target_px - self.px
+            dy = self.target_py - self.py
+            dist = (dx ** 2 + dy ** 2) ** 0.5
+
+            if dist <= step:
+                self.px = self.target_px
+                self.py = self.target_py
+                self.x = self.target_x
+                self.y = self.target_y
+
+                neighbors = self.maze.reachable_neighbors(self.x, self.y)
+                best_neighbor = None
+                best_dist = -1
+                for neighbor in neighbors:
+                    path = Tools.shortest_path(neighbor, (player.x, player.y), self.maze)
+                    if path and len(path) > best_dist:
+                        best_dist = len(path)
+                        best_neighbor = neighbor
+
+                x, y = best_neighbor
+                nx, ny = self.maze.get_dir(self.x, self.y, x, y)
+                self.target_x = self.x + nx
+                self.target_y = self.y + ny
+                self.target_px, self.target_py = self.maze.cell_to_pixel(self.target_x, self.target_y)
+                
+
+
+
+            else:
+                self.px += (dx / dist) * step
+                self.py += (dy / dist) * step
+
+
     def update(self, deltatime, player: Player):
         Tools._update_range(self)
         Tools._player_in_zone(self, player)
-        if self.player_detectet_in_zone:
-            self.chassing(deltatime, player)
+        if self.player_detectet_in_zone and not self.scared:
+            self.running(deltatime, player)
+        # if self.player_detectet_in_zone and self.scared:
+        #     self.running(deltatime, player)
         if not self.player_detectet_in_zone:
             self.random_move(deltatime, player)
+        # self.running(deltatime, player)
 
     def draw(self, screen, ghost_png):
         self.spirite = pygame.image.load(ghost_png)

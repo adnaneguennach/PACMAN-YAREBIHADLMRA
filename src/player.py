@@ -1,6 +1,6 @@
 import math
 import pygame
-from src.maze_rendering import Maze
+from src.maze import Maze
 
 
 class Player:

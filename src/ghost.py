@@ -1,4 +1,4 @@
-from src.maze_rendering import Maze
+from src.maze import Maze
 from src.player import Player
 from collections import deque
 from src.tools import Tools
@@ -19,6 +19,22 @@ class Ghost:
         self.target_px = self.px
         self.target_py = self.py
         self.seen = deque()
+
+        self.range = []
+
+    def _update_range(self):
+        self.range = []
+        for i in range(
+            self.y - (self.maze.height // 4),
+            self.y + (self.maze.height // 4),
+        ):
+            for j in range(
+                self.x - (self.maze.width // 4),
+                self.x + (self.maze.width // 4),
+            ):
+                if i < 0 or j < 0:
+                    continue
+                self.range.append((j, i))
 
     def _touching_player(self, player: Player):
         dx = self.px - player.px

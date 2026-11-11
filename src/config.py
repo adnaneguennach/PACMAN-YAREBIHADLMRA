@@ -21,8 +21,6 @@ class ConfigParser:
 
     def parsing_data(self):
         try:
-            # print(self.path_config)
-            # exit()
             self.read_config(self.path_config)
             config = self.config.copy()
             if not ("levels" in config.keys()):

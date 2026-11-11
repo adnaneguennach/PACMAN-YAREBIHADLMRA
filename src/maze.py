@@ -2,7 +2,7 @@
 
 import pygame
 
-NORTH, EAST, SOUTH, WEST = 1, 2, 4, 8
+NORTH, EAST, SOUTH, WEST = 1, 2, 4, 8 
 
 DIRECTIONS = {NORTH: (0, -1), EAST: (1, 0), SOUTH: (0, 1), WEST: (-1, 0)}
 
@@ -12,7 +12,7 @@ WALL_THICKNESS = 2
 WALL_COLOR = "blue"
 
 
-class MazeAdapter:
+class Maze:
     def __init__(self, walls, cell_size, screen_size):
         self.walls = walls
         self.cell_size = cell_size
@@ -27,7 +27,6 @@ class MazeAdapter:
         ]
         self.center = (self.width // 2, self.height // 2)
 
-        # Pellets are stored as sets of (x, y) cells: eating one = .discard().
         self.power_pellets = set(self.corners)
         self.pellets = {
             (x, y)
@@ -37,8 +36,17 @@ class MazeAdapter:
         }
 
         self._center_on_screen(screen_size)
+        self._wall_rects = self._build_wall_rects()
 
     # ---------- logic ----------
+
+    def get_cor(self, direction):
+        return DIRECTIONS[direction]
+
+    def get_dir(self, x, y, target_x, target_y):
+        cor_x = x - target_x
+        cor_y = y - target_y
+        return cor_x, cor_y
 
     def in_bounds(self, x, y):
         return 0 <= x < self.width and 0 <= y < self.height
@@ -54,7 +62,8 @@ class MazeAdapter:
         return [
             (x + dx, y + dy)
             for direction, (dx, dy) in DIRECTIONS.items()
-            if self.can_move(x, y, direction) and self.in_bounds(x + dx, y + dy)
+            if self.can_move(x, y, direction)
+            and self.in_bounds(x + dx, y + dy)
         ]
 
     def adjacent_cells(self, x, y):
@@ -74,11 +83,11 @@ class MazeAdapter:
             self.offset_y + y * self.cell_size,
         )
 
-    # def cell_center(self, x, y):
-    #     """Center pixel of a cell."""
-    #     px, py = self.cell_to_pixel(x, y)
-    #     half = self.cell_size // 2
-    #     return px + half, py + half
+    def cell_center(self, x, y):
+        """Center pixel of a cell."""
+        px, py = self.cell_to_pixel(x, y)
+        half = self.cell_size // 2
+        return px + half, py + half
 
     def pixel_to_cell(self, pixel_x, pixel_y):
         return (
@@ -94,3 +103,25 @@ class MazeAdapter:
             raise ValueError("Maze is too large for the screen resolution.")
         self.offset_x = (screen_w - maze_w) // 2
         self.offset_y = (screen_h - maze_h) // 2
+
+    # ---------- drawing ----------
+
+    def _build_wall_rects(self):
+        """Compute every wall rectangle once instead of on every frame."""
+        size, thick = self.cell_size, WALL_THICKNESS
+        rects = []
+        for y, row in enumerate(self.walls):
+            for x, cell in enumerate(row):
+                px, py = self.cell_to_pixel(x, y)
+                edges = {
+                    NORTH: (px, py, size, thick),
+                    EAST: (px + size - thick, py, thick, size),
+                    SOUTH: (px, py + size - thick, size, thick),
+                    WEST: (px, py, thick, size),
+                }
+                rects += [rect for bit, rect in edges.items() if cell & bit]
+        return rects
+
+    def draw(self, screen):
+        for rect in self._wall_rects:
+            pygame.draw.rect(screen, WALL_COLOR, rect)

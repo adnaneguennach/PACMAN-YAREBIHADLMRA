@@ -1,10 +1,10 @@
 from collections import deque
-from src.maze_adapter import MazeAdapter
+from src.maze import Maze
 
 
 class Tools:
     @staticmethod
-    def next_step_bfs(start, goal, maze: MazeAdapter):
+    def next_step_bfs(start, goal, maze: Maze):
         if start == goal:
             return None
 
@@ -33,7 +33,7 @@ class Tools:
         return next_step
 
     @staticmethod
-    def shortest_path(start, goal, maze: MazeAdapter):
+    def shortest_path(start, goal, maze: Maze):
         if start == goal:
             return None
 

@@ -2,7 +2,7 @@ import pygame
 from mazegenerator import MazeGenerator
 
 from src.config import ConfigParser
-from src.maze_rendering import EAST, NORTH, SOUTH, WEST, Maze
+from src.maze import EAST, NORTH, SOUTH, WEST, Maze
 from src.player import Player
 from src.ghost import Ghost
 
@@ -32,6 +32,9 @@ class GameEngine:
         self.player = Player(player_x, player_y, PLAYER_SPEED, self.maze)
         ghost_x, ghost_y = self.maze.corners[0]
         self.ghost = Ghost(ghost_x, ghost_y, 4, self.maze)
+
+    def change_level(self):
+        pass
 
     def run(self):
         clock = pygame.time.Clock()

@@ -31,7 +31,7 @@ class GameEngine:
         player_x, player_y = self.maze.center
         self.player = Player(player_x, player_y, PLAYER_SPEED, self.maze)
         ghost_x, ghost_y = self.maze.corners[0]
-        self.ghost = Ghost(ghost_x, ghost_y, 4, self.maze)
+        self.ghost = Ghost(ghost_x, ghost_y, 3, self.maze)
 
     def change_level(self):
         pass

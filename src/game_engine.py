@@ -38,7 +38,7 @@ class GameEngine:
         while self._handle_events():
             deltatime = clock.tick(FPS) / 1000
             self.player.update(deltatime)
-            self.ghost.random_move(deltatime)
+            self.ghost.update(deltatime, self.player)
             self._draw(deltatime)
         pygame.quit()
 

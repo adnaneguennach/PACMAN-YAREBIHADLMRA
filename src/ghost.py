@@ -1,10 +1,12 @@
 from src.maze_rendering import Maze
+from src.player import Player
 from collections import deque
+from src.tools import Tools
 import random
 import pygame
 
 
-class Ghost():
+class Ghost:
     def __init__(self, x, y, speed, maze: Maze):
         self.maze = maze
         self.x = x
@@ -18,11 +20,20 @@ class Ghost():
         self.target_py = self.py
         self.seen = deque()
 
-    def random_move(self, deltatime):
+    def _touching_player(self, player: Player):
+        dx = self.px - player.px
+        dy = self.py - player.py
+        dist = (dx**2 + dy**2) ** 0.5
+        return dist <= self.maze.cell_size // 2
+
+    def random_move(self, deltatime, player: Player):
+        if self._touching_player(player):
+            print("looooooooser")
+            exit()
         step = self.speed * deltatime * self.maze.cell_size
         dx = self.target_px - self.px
         dy = self.target_py - self.py
-        dist = (dx ** 2 + dy ** 2) ** 0.5
+        dist = (dx**2 + dy**2) ** 0.5
 
         if dist <= step:
             self.x = self.target_x
@@ -45,11 +56,51 @@ class Ghost():
             nx, ny = self.maze.get_dir(x, y, self.target_x, self.target_y)
             self.target_x = self.x + nx
             self.target_y = self.y + ny
-            self.target_px, self.target_py = self.maze.cell_to_pixel(self.target_x, self.target_y)
+            self.target_px, self.target_py = self.maze.cell_to_pixel(
+                self.target_x, self.target_y
+            )
 
         else:
             self.px += (dx / dist) * step
             self.py += (dy / dist) * step
+
+    def chassing(self, deltatime, player: Player):
+        if self._touching_player(player):
+            print("loseeeeeeer")
+            exit()
+
+        step = self.speed * self.maze.cell_size * deltatime
+        dx = self.target_px - self.px
+        dy = self.target_py - self.py
+        dist = (dx**2 + dy**2) ** 0.5
+
+        if dist <= step:
+            self.px = self.target_px
+            self.py = self.target_py
+            self.x = self.target_x
+            self.y = self.target_y
+
+            next_step = Tools.next_step_bfs(
+                (self.x, self.y), (player.x, player.y), self.maze
+            )
+            if not next_step:
+                return
+
+            nx, ny = self.maze.get_dir(*next_step)
+            self.target_x = self.x + nx
+            self.target_y = self.y + ny
+            self.target_px, self.target_py = self.maze.cell_to_pixel(
+                self.target_px, self.target_py
+            )
+        else:
+            self.px += (dx / dist) * step
+            self.py += (dy / dist) * step
+
+
+    def update(self, deltatime, player: Player):
+        # if player_detectet_in_zone:
+        #     self.chassing(deltatime, player)
+        self.random_move(deltatime, player)
 
     def draw(self, screen, ghost_png):
         self.spirite = pygame.image.load(ghost_png)
@@ -57,13 +108,13 @@ class Ghost():
             self.spirite,
             (
                 self.maze.cell_size - self.maze.cell_size // 4,
-                self.maze.cell_size - self.maze.cell_size // 4
-            )
+                self.maze.cell_size - self.maze.cell_size // 4,
+            ),
         )
         screen.blit(
             self.spirite,
             (
                 self.px + self.maze.cell_size // 6,
                 self.py + self.maze.cell_size // 6,
-            )
+            ),
         )

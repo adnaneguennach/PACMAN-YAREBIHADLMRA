@@ -21,34 +21,8 @@ class Ghost:
         self.seen = deque()
         self.player_detectet_in_zone = False
 
-    def _update_range(self):
-        self.range = []
-        for i in range(
-            self.y - (self.maze.height // 4),
-            self.y + (self.maze.height // 4),
-        ):
-            for j in range(
-                self.x - (self.maze.width // 4),
-                self.x + (self.maze.width // 4),
-            ):
-                if i < 0 or j < 0:
-                    continue
-                self.range.append((j, i))
-
-    def _touching_player(self, player: Player):
-        dx = self.px - player.px
-        dy = self.py - player.py
-        dist = (dx**2 + dy**2) ** 0.5
-        return dist <= self.maze.cell_size // 2
-
-    def _player_in_zone(self, player: Player):
-        if (player.x, player.y) in self.range:
-            self.player_detectet_in_zone = True
-        else:
-            self.player_detectet_in_zone = False
-
     def random_move(self, deltatime, player: Player):
-        if self._touching_player(player):
+        if Tools._touching_player(self, player):
             print("looooooooser")
             exit()
         step = self.speed * deltatime * self.maze.cell_size
@@ -86,7 +60,7 @@ class Ghost:
             self.py += (dy / dist) * step
 
     def chassing(self, deltatime, player: Player):
-        if self._touching_player(player):
+        if Tools._touching_player(self, player):
             print("loseeeeeeer")
             exit()
 
@@ -119,8 +93,8 @@ class Ghost:
 
 
     def update(self, deltatime, player: Player):
-        self._update_range()
-        self._player_in_zone(player)
+        Tools._update_range(self)
+        Tools._player_in_zone(self, player)
         if self.player_detectet_in_zone:
             self.chassing(deltatime, player)
         if not self.player_detectet_in_zone:

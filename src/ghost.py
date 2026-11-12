@@ -25,6 +25,7 @@ class Ghost:
         self.player_detectet_in_zone = False
         self.scared = False
         self.range = []
+        self.timer = 0
 
     def random_move(self, deltatime, player: Player):
         if Tools._touching_player(self, player):
@@ -87,7 +88,7 @@ class Ghost:
                 # makil9ach path f l7ala dyal lghost w lplayer f nefs cell
                 return
             x, y = next_step
-            nx, ny = self.maze.get_dir(self.x, self.y, x, y)
+            nx, ny = self.maze.get_dir(x, y, self.x, self.y)
             self.target_x = self.x + nx
             self.target_y = self.y + ny
             self.target_px, self.target_py = self.maze.cell_to_pixel(
@@ -131,13 +132,19 @@ class Ghost:
                 self.px += (dx / dist) * step
                 self.py += (dy / dist) * step
 
+    def manage_ghost_life(self, deltatime, player):
+        Tools.check_player_in_zone(self, player)
+        # if ghost_dead:
+        #     all_moves = stop_moving
+        # if self.player_eat_super_pacgum:
+        #     self.scared = True
+        #     self.player_eat_super_pacgum = False
 
     def update(self, deltatime, player: Player):
-        Tools._update_range(self)
-        Tools._player_in_zone(self, player)
-        if self.player_detectet_in_zone and not self.scared:
-            self.running(deltatime, player)
-        if self.player_detectet_in_zone and self.scared:
+        self.manage_ghost_life(deltatime, player)
+        # if self.player_detectet_in_zone and not self.scared:
+        #     self.chassing(deltatime, player)
+        if self.player_detectet_in_zone:
             self.running(deltatime, player)
         if not self.player_detectet_in_zone:
             self.random_move(deltatime, player)

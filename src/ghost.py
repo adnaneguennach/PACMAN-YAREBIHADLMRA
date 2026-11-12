@@ -142,9 +142,9 @@ class Ghost:
 
     def update(self, deltatime, player: Player):
         self.manage_ghost_life(deltatime, player)
-        # if self.player_detectet_in_zone and not self.scared:
-        #     self.chassing(deltatime, player)
-        if self.player_detectet_in_zone:
+        if self.player_detectet_in_zone and not self.scared:
+            self.chassing(deltatime, player)
+        if self.player_detectet_in_zone and self.scared:
             self.running(deltatime, player)
         if not self.player_detectet_in_zone:
             self.random_move(deltatime, player)

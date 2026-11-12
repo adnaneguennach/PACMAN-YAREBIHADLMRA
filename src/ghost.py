@@ -122,13 +122,10 @@ class Ghost:
                         best_neighbor = neighbor
 
                 x, y = best_neighbor
-                nx, ny = self.maze.get_dir(self.x, self.y, x, y)
+                nx, ny = self.maze.get_dir(x, y, self.x, self.y)
                 self.target_x = self.x + nx
                 self.target_y = self.y + ny
                 self.target_px, self.target_py = self.maze.cell_to_pixel(self.target_x, self.target_y)
-                
-
-
 
             else:
                 self.px += (dx / dist) * step
@@ -140,11 +137,10 @@ class Ghost:
         Tools._player_in_zone(self, player)
         if self.player_detectet_in_zone and not self.scared:
             self.running(deltatime, player)
-        # if self.player_detectet_in_zone and self.scared:
-        #     self.running(deltatime, player)
+        if self.player_detectet_in_zone and self.scared:
+            self.running(deltatime, player)
         if not self.player_detectet_in_zone:
             self.random_move(deltatime, player)
-        # self.running(deltatime, player)
 
     def draw(self, screen, ghost_png):
         self.spirite = pygame.image.load(ghost_png)

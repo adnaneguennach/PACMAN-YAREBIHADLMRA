@@ -71,7 +71,8 @@ class Tools:
             return dist <= ghost.maze.cell_size // 2
 
     @staticmethod
-    def _player_in_zone(ghost, player: Player):
+    def check_player_in_zone(ghost, player: Player):
+        Tools._update_range(ghost)
         if (player.x, player.y) in ghost.range:
             ghost.player_detectet_in_zone = True
         else:

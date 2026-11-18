@@ -65,11 +65,13 @@ class Maze:
         """Remove a pellet at (x, y). Returns the points earned (0 if none)."""
         if (x, y) in self.pellets:
             self.pellets.remove((x, y))
-            return PELLET_POINTS
+            power = False
+            return (PELLET_POINTS, power)
         if (x, y) in self.power_pellets:
             self.power_pellets.remove((x, y))
-            return POWER_PELLET_POINTS
-        return 0
+            power = True
+            return (POWER_PELLET_POINTS, power)
+        return (0, False)
 
     def is_cleared(self):
         return not self.pellets and not self.power_pellets

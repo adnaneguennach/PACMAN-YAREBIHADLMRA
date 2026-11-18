@@ -15,6 +15,7 @@ class Ghost:
         self.default_y = y
         self.px, self.py = self.maze.cell_to_pixel(self.x, self.y)
         self.speed = speed
+        self.dead_speed = speed * 2
 
         self.target_x = x
         self.target_y = y
@@ -26,6 +27,7 @@ class Ghost:
         self.scared = False
         self.range = []
         self.timer = 0
+        self.eaten = False
 
     def random_move(self, deltatime, player: Player):
         if Tools._touching_player(self, player):
@@ -101,6 +103,8 @@ class Ghost:
 
 
     def running(self, deltatime, player: Player):
+        if Tools._touching_player(self, player):
+            self.eaten = True
         if (self.x, self.y) in self.range:
             step = self.speed * deltatime * self.maze.cell_size
             dx = self.target_px - self.px
@@ -132,6 +136,36 @@ class Ghost:
                 self.px += (dx / dist) * step
                 self.py += (dy / dist) * step
 
+    def to_start_and_freez(self, deltatime):
+        step = self.speed * deltatime * self.maze.cell_size
+        dx = self.target_px - self.px
+        dy = self.target_py - self.py
+        dist = (dx ** 2 + dy ** 2) ** 0.5
+
+        if dist <= step:
+            self.target_px = self.px
+            self.target_py = self.py
+            self.target_x = self.x
+            self.target_y = self.y
+
+            next_move_to_start = Tools.next_step_bfs(
+                (self.x, self.y), (self.default_x, self.default_y), self.maze)
+
+            if next_move_to_start is None:
+                return
+
+            x, y = next_move_to_start
+            nx, ny = self.maze.get_dir(x, y, self.x, self.y)
+
+            self.target_x = self.x + nx
+            self.target_y = self.y + ny
+            self.target_px, self.target_py = self.maze.cell_to_pixel(self.target_x, self.target_y)
+
+        else:
+            self.px += (dx / dist) * step
+            self.py += (dy / dist) * step
+
+
     def manage_ghost_life(self, deltatime, player):
         Tools.check_player_in_zone(self, player)
         # if ghost_dead:
@@ -142,14 +176,18 @@ class Ghost:
 
     def update(self, deltatime, player: Player):
         self.manage_ghost_life(deltatime, player)
-        if self.player_detectet_in_zone and not self.scared:
+        if self.player_detectet_in_zone and not player.power and not self.eaten:
             self.chassing(deltatime, player)
-        if self.player_detectet_in_zone and self.scared:
+        if self.player_detectet_in_zone and player.power and not self.eaten:
             self.running(deltatime, player)
-        if not self.player_detectet_in_zone:
+        if not self.player_detectet_in_zone and not self.eaten:
             self.random_move(deltatime, player)
+        if self.eaten:
+            self.to_start_and_freez(deltatime)
 
-    def draw(self, screen, ghost_png):
+
+    # ___________________Draw________________________________
+    def normal_mode(self, screen, ghost_png, player: Player):
         self.spirite = pygame.image.load(ghost_png)
         self.spirite = pygame.transform.scale(
             self.spirite,
@@ -165,3 +203,46 @@ class Ghost:
                 self.py + self.maze.cell_size // 6,
             ),
         )
+
+    def dead_mode(self, screen, ghost_png, player: Player):
+        self.spirite = pygame.image.load(ghost_png)
+        self.spirite = pygame.transform.scale(
+            self.spirite,
+            (
+                self.maze.cell_size - self.maze.cell_size // 4,
+                self.maze.cell_size - self.maze.cell_size // 4,
+            ),
+        )
+        screen.blit(
+            self.spirite,
+            (
+                self.px + self.maze.cell_size // 6,
+                self.py + self.maze.cell_size // 6,
+            ),
+        )
+
+    def scare_mode(self, screen, ghost_png, player: Player):
+        self.spirite = pygame.image.load(ghost_png)
+        self.spirite = pygame.transform.scale(
+            self.spirite,
+            (
+                self.maze.cell_size - self.maze.cell_size // 4,
+                self.maze.cell_size - self.maze.cell_size // 4,
+            ),
+        )
+        screen.blit(
+            self.spirite,
+            (
+                self.px + self.maze.cell_size // 6,
+                self.py + self.maze.cell_size // 6,
+            ),
+        )
+        
+
+    def draw(self, screen, ghost_png, player: Player):
+        if not player.power:
+            self.normal_mode(screen, ghost_png, player)
+        elif player.power and not self.eaten:
+            self.scare_mode(screen, "assets/ghost_images/powerup.png", player)
+        elif player.power and self.eaten:
+            self.dead_mode(screen, "assets/ghost_images/dead.png", player)

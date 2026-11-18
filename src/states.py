@@ -124,16 +124,39 @@ class VictoryState(EndState):
 
 
 class PlayingState(State):
-    def enter(self, **kwargs):
-        level = self.game.current_level()
-        self.maze = self.game.build_maze(level)
-        px, py = self.maze.center
+    def __init__(self, game):
+        super().__init__(game)
+        self.timer = 0
+
+    def init_ghosts(self, level):
         gx, gy = self.maze.corners[0]
-        self.player = Player(px, py, PLAYER_SPEED, self.maze)
-        self.ghost = Ghost(
+        self.red_ghost = Ghost(
             gx, gy, level.get("ghost_speed", GHOST_SPEED), self.maze
         )
-        self.finished = False  # avoid posting the same event twice
+        gx, gy = self.maze.corners[1]
+        self.pink_ghost = Ghost(
+            gx, gy, level.get("ghost_speed", GHOST_SPEED), self.maze
+        )
+        gx, gy = self.maze.corners[2]
+        self.blue_ghost = Ghost(
+            gx, gy, level.get("ghost_speed", GHOST_SPEED), self.maze
+        )
+
+        gx, gy = self.maze.corners[3]
+        self.orange_ghost = Ghost(
+            gx, gy, level.get("ghost_speed", GHOST_SPEED), self.maze
+        )
+
+    def enter(self):
+        level = self.game.current_level()
+        self.maze: Maze = self.game.build_maze(level)
+        px, py = self.maze.center
+        self.player = Player(px, py, PLAYER_SPEED, self.maze)
+
+        self.init_ghosts(level)
+        
+
+        self.finished = False
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN and event.key in KEY_TO_DIRECTION:
@@ -143,14 +166,24 @@ class PlayingState(State):
         if self.finished:
             return
         self.player.update(deltatime)
-        self.ghost.update(deltatime, self.player)
+        self.red_ghost.update(deltatime, self.player)
+        self.blue_ghost.update(deltatime, self.player)
+        self.orange_ghost.update(deltatime, self.player)
+        self.pink_ghost.update(deltatime, self.player)
 
-        # Entity positions are assumed to be in cell units (x, y).
         cell = (round(self.player.x), round(self.player.y))
-        self.game.score += self.maze.eat_pellet(*cell)
+        score, power = self.maze.eat_pellet(*cell)
+        self.game.score += score
+        self.timer += deltatime
+        if self.timer >= 10:
+            self.player.power = False
+            self.timer = 0
 
-        dist = ((self.player.x - self.ghost.x) ** 2
-                + (self.player.y - self.ghost.y) ** 2) ** 0.5
+        if power:
+            self.player.power = True
+
+        dist = ((self.player.x - self.red_ghost.x) ** 2
+                + (self.player.y - self.red_ghost.y) ** 2) ** 0.5
         if dist < HIT_DISTANCE:
             self.finished = True
             EventManager.post(PLAYER_DIED)
@@ -162,7 +195,10 @@ class PlayingState(State):
         screen.fill("black")
         self.maze.draw(screen)
         self.player.draw_and_switch(screen, self.game.deltatime)
-        self.ghost.draw(screen, "assets/ghost_images/red.png")
+        self.red_ghost.draw(screen, "assets/ghost_images/red.png", self.player)
+        self.blue_ghost.draw(screen, "assets/ghost_images/blue.png", self.player)
+        self.orange_ghost.draw(screen, "assets/ghost_images/orange.png", self.player)
+        self.pink_ghost.draw(screen, "assets/ghost_images/pink.png", self.player)
         font = pygame.font.Font(None, 32)
         hud = f"Score: {self.game.score}   Lives: {self.game.lives}   " \
               f"Level: {self.game.level_index + 1}"

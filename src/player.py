@@ -28,6 +28,7 @@ class Player:
         ]
         self.var = 0
         self.index = 0
+        self.power = False
 
     def update(self, deltatime):
         step = self.speed * self.maze.cell_size * deltatime

@@ -10,6 +10,10 @@ SOLID_CELLS = (15, 42)
 
 WALL_THICKNESS = 2
 WALL_COLOR = "blue"
+PELLET_COLOR = "white"
+POWER_PELLET_COLOR = "orange"
+PELLET_POINTS = 10
+POWER_PELLET_POINTS = 50
 
 
 class Maze:
@@ -56,6 +60,19 @@ class Maze:
 
     def can_move(self, x, y, direction):
         return not self.has_wall(x, y, direction)
+
+    def eat_pellet(self, x, y):
+        """Remove a pellet at (x, y). Returns the points earned (0 if none)."""
+        if (x, y) in self.pellets:
+            self.pellets.remove((x, y))
+            return PELLET_POINTS
+        if (x, y) in self.power_pellets:
+            self.power_pellets.remove((x, y))
+            return POWER_PELLET_POINTS
+        return 0
+
+    def is_cleared(self):
+        return not self.pellets and not self.power_pellets
 
     def reachable_neighbors(self, x, y):
         """Neighbouring cells that can be entered without crossing a wall."""
@@ -125,3 +142,9 @@ class Maze:
     def draw(self, screen):
         for rect in self._wall_rects:
             pygame.draw.rect(screen, WALL_COLOR, rect)
+        for x, y in self.pellets:
+            pygame.draw.circle(
+                screen, PELLET_COLOR, self.cell_center(x, y), 3)
+        for x, y in self.power_pellets:
+            pygame.draw.circle(
+                screen, POWER_PELLET_COLOR, self.cell_center(x, y), 8)

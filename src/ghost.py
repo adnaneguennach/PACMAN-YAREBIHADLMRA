@@ -138,7 +138,7 @@ class Ghost:
         #     all_moves = stop_moving
         # if self.player_eat_super_pacgum:
         #     self.scared = True
-        #     self.player_eat_super_pacgum = False
+        #     self.player_eat_super_pacgum = False  
 
     def update(self, deltatime, player: Player):
         self.manage_ghost_life(deltatime, player)

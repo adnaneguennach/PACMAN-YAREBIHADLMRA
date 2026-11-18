@@ -174,10 +174,7 @@ class PlayingState(State):
         cell = (round(self.player.x), round(self.player.y))
         score, power = self.maze.eat_pellet(*cell)
         self.game.score += score
-        self.timer += deltatime
-        if self.timer >= 10:
-            self.player.power = False
-            self.timer = 0
+        
 
         if power:
             self.player.power = True

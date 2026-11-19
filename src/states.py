@@ -10,7 +10,12 @@ from src.player import Player
 CELL_SIZE = 40
 PLAYER_SPEED = 4
 GHOST_SPEED = 3
-HIT_DISTANCE = 0.5  # in cells
+
+POWER_DURATION = 6.0  # seconds a power pellet lasts
+POWER_WARNING = 4.5   # after this, scared ghosts show the "about to end" sprite
+
+# One entry per maze corner, in the same order as Maze.corners.
+GHOST_COLORS = ("red", "pink", "blue", "orange")
 
 KEY_TO_DIRECTION = {
     pygame.K_UP: NORTH,
@@ -18,6 +23,15 @@ KEY_TO_DIRECTION = {
     pygame.K_DOWN: SOUTH,
     pygame.K_LEFT: WEST,
 }
+
+_fonts = {}
+
+
+def get_font(size):
+    """Fonts are loaded from disk, so build each size only once."""
+    if size not in _fonts:
+        _fonts[size] = pygame.font.Font(None, size)
+    return _fonts[size]
 
 
 class State:
@@ -59,8 +73,7 @@ class TextState(State):
     """Base for simple full-screen text states."""
 
     def _text(self, screen, text, size, y_offset=0, color="white"):
-        font = pygame.font.Font(None, size)
-        surface = font.render(text, True, color)
+        surface = get_font(size).render(text, True, color)
         rect = surface.get_rect(
             center=(screen.get_width() // 2,
                     screen.get_height() // 2 + y_offset)
@@ -124,67 +137,68 @@ class VictoryState(EndState):
 
 
 class PlayingState(State):
-    def __init__(self, game):
-        super().__init__(game)
-        self.timer = 0
-
     def init_ghosts(self, level):
-        gx, gy = self.maze.corners[0]
-        self.red_ghost = Ghost(
-            gx, gy, level.get("ghost_speed", GHOST_SPEED), self.maze
-        )
-        gx, gy = self.maze.corners[1]
-        self.pink_ghost = Ghost(
-            gx, gy, level.get("ghost_speed", GHOST_SPEED), self.maze
-        )
-        gx, gy = self.maze.corners[2]
-        self.blue_ghost = Ghost(
-            gx, gy, level.get("ghost_speed", GHOST_SPEED), self.maze
-        )
+        speed = level.get("ghost_speed", GHOST_SPEED)
+        corners = self.maze.corners[:len(GHOST_COLORS)]
+        self.ghosts = [Ghost(x, y, speed, self.maze) for x, y in corners]
 
-        gx, gy = self.maze.corners[3]
-        self.orange_ghost = Ghost(
-            gx, gy, level.get("ghost_speed", GHOST_SPEED), self.maze
-        )
-
-    def enter(self):
+    def enter(self, **kwargs):
         level = self.game.current_level()
         self.maze: Maze = self.game.build_maze(level)
         px, py = self.maze.center
         self.player = Player(px, py, PLAYER_SPEED, self.maze)
 
         self.init_ghosts(level)
-        
 
+        self.power_timer = 0.0
         self.finished = False
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN and event.key in KEY_TO_DIRECTION:
             self.player.next_dir = KEY_TO_DIRECTION[event.key]
 
+    def _update_power(self, deltatime):
+        """Single power-up clock for the whole level (ghosts only read it)."""
+        if self.player.power:
+            self.power_timer += deltatime
+            if self.power_timer >= POWER_DURATION:
+                self.player.power = False
+        return self.player.power and self.power_timer >= POWER_WARNING
+
+    def _resolve_ghost_hits(self):
+        """Handle every ghost touching the player. True if the player died."""
+        for ghost in self.ghosts:
+            if ghost.eaten or not ghost.touching(self.player):
+                continue
+            if self.player.power:
+                ghost.eat()
+            else:
+                self.finished = True
+                EventManager.post(PLAYER_DIED)
+                return True
+        return False
+
     def update(self, deltatime):
         if self.finished:
             return
+
         self.player.update(deltatime)
-        self.red_ghost.update(deltatime, self.player)
-        self.blue_ghost.update(deltatime, self.player)
-        self.orange_ghost.update(deltatime, self.player)
-        self.pink_ghost.update(deltatime, self.player)
 
         cell = (round(self.player.x), round(self.player.y))
         score, power = self.maze.eat_pellet(*cell)
         self.game.score += score
-        
-
         if power:
             self.player.power = True
+            self.power_timer = 0.0  # eating another pellet restarts the clock
 
-        dist = ((self.player.x - self.red_ghost.x) ** 2
-                + (self.player.y - self.red_ghost.y) ** 2) ** 0.5
-        if dist < HIT_DISTANCE:
-            self.finished = True
-            EventManager.post(PLAYER_DIED)
-        elif self.maze.is_cleared():
+        power_ending = self._update_power(deltatime)
+
+        for ghost in self.ghosts:
+            ghost.update(deltatime, self.player, power_ending)
+
+        if self._resolve_ghost_hits():
+            return
+        if self.maze.is_cleared():
             self.finished = True
             EventManager.post(LEVEL_CLEARED)
 
@@ -192,11 +206,8 @@ class PlayingState(State):
         screen.fill("black")
         self.maze.draw(screen)
         self.player.draw_and_switch(screen, self.game.deltatime)
-        self.red_ghost.draw(screen, "assets/ghost_images/red.png", self.player)
-        self.blue_ghost.draw(screen, "assets/ghost_images/blue.png", self.player)
-        self.orange_ghost.draw(screen, "assets/ghost_images/orange.png", self.player)
-        self.pink_ghost.draw(screen, "assets/ghost_images/pink.png", self.player)
-        font = pygame.font.Font(None, 32)
+        for ghost, color in zip(self.ghosts, GHOST_COLORS):
+            ghost.draw(screen, f"assets/ghost_images/{color}.png")
         hud = f"Score: {self.game.score}   Lives: {self.game.lives}   " \
               f"Level: {self.game.level_index + 1}"
-        screen.blit(font.render(hud, True, "white"), (10, 10))
+        screen.blit(get_font(32).render(hud, True, "white"), (10, 10))

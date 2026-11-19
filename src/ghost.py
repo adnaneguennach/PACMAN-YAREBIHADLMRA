@@ -23,12 +23,15 @@ class Ghost:
         self.target_py = self.py
 
         self.seen = deque()
+        self.range = []
+
         self.player_detectet_in_zone = False
         self.scared = False
-        self.range = []
         self.eaten = False
-
-        self.timer = 0
+        self.start_to_return = False
+        
+        self.timer1 = 0
+        self.timer2 = 0
         self.dead_timer = 0
 
     def random_move(self, deltatime, player: Player):
@@ -101,8 +104,6 @@ class Ghost:
         else:
             self.px += (dx / dist) * step
             self.py += (dy / dist) * step
-
-
 
     def running(self, deltatime, player: Player):
         if Tools._touching_player(self, player):
@@ -187,7 +188,7 @@ class Ghost:
         if self.eaten:
             self.to_start_and_freez(deltatime)
             self.dead_timer += deltatime
-            if self.dead_timer >= 10:
+            if self.dead_timer >= 6:
                 self.revive()
         elif self.player_detectet_in_zone and not player.power:
             self.chassing(deltatime, player)
@@ -195,15 +196,23 @@ class Ghost:
             self.running(deltatime, player)
         else:
             self.random_move(deltatime, player)
-
-        self.timer += deltatime
-        if self.timer >= 10:
-            self.timer = 0
-            player.power = False
-
+        if player.power:
+            self.timer1 += deltatime
+            self.timer2 += deltatime
+            if self.timer2 >= 4.5:
+                self.timer2 = 0
+                self.start_to_return = True
+            if self.timer1 >= 6:
+                self.timer1 = 0
+                player.power = False
+                self.start_to_return = False
+        else:
+            self.timer1 = 0
+            self.timer2 = 0
 
     #___________________Draw_assi_adnane___________________
-    def normal_mode(self, screen, ghost_png, player: Player):
+    # khassni nm7i player mn lparam
+    def normal_mode(self, screen, ghost_png):
         self.spirite = pygame.image.load(ghost_png)
         self.spirite = pygame.transform.scale(
             self.spirite,
@@ -220,7 +229,7 @@ class Ghost:
             ),
         )
 
-    def dead_mode(self, screen, ghost_png, player: Player):
+    def dead_mode(self, screen, ghost_png):
         self.spirite = pygame.image.load(ghost_png)
         self.spirite = pygame.transform.scale(
             self.spirite,
@@ -237,7 +246,24 @@ class Ghost:
             ),
         )
 
-    def scare_mode(self, screen, ghost_png, player: Player):
+    def scare_mode(self, screen, ghost_png):
+        self.spirite = pygame.image.load(ghost_png)
+        self.spirite = pygame.transform.scale(
+            self.spirite,
+            (
+                self.maze.cell_size - self.maze.cell_size // 4,
+                self.maze.cell_size - self.maze.cell_size // 4,
+            ),
+        )
+        screen.blit(
+            self.spirite,
+            (
+                self.px + self.maze.cell_size // 6,
+                self.py + self.maze.cell_size // 6,
+            ),
+        )
+
+    def ghost_return(self, screen, ghost_png):
         self.spirite = pygame.image.load(ghost_png)
         self.spirite = pygame.transform.scale(
             self.spirite,
@@ -257,8 +283,11 @@ class Ghost:
 
     def draw(self, screen, ghost_png, player: Player):
         if not player.power:
-            self.normal_mode(screen, ghost_png, player)
+            self.normal_mode(screen, ghost_png)
         elif player.power and not self.eaten:
-            self.scare_mode(screen, "assets/ghost_images/powerup.png", player)
+            if not self.start_to_return:
+                self.scare_mode(screen, "assets/ghost_images/powerup.png")
+            else:
+                self.ghost_return(screen, "assets/ghost_images/ghost_return.png")
         elif self.eaten:
-            self.dead_mode(screen, "assets/ghost_images/dead.png", player)
+            self.dead_mode(screen, "assets/ghost_images/dead.png")

@@ -195,8 +195,8 @@ class Ghost:
                 if player.power:
                     self.eaten = True
                     return
-                print("loser")
-                exit()
+                elif player.lives_count < player.lives:
+                    player.revive()
 
             if self.player_detectet_in_zone and not player.power:
                 self.chassing(deltatime, player)

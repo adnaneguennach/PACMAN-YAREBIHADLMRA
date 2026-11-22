@@ -6,12 +6,16 @@ from src.maze import Maze
 class Player:
     DIRECTION_ANGLES = {1: 270, 2: 0, 4: 90, 8: 180}
 
-    def __init__(self, x, y, speed, maze: Maze):
+    def __init__(self, x, y, speed, lives, maze: Maze):
         self.maze = maze
         self.x = x
         self.y = y
+        self.default_x = x
+        self.default_y = y
         self.px, self.py = self.maze.cell_to_pixel(self.x, self.y)
         self.speed = speed
+        self.lives = lives
+        self.lives_count = 0
 
         self.target_x = self.x
         self.target_y = self.y
@@ -30,6 +34,12 @@ class Player:
         self.index = 0
 
         self.power = False
+
+
+    def revive(self):
+        self.x = self.default_x
+        self.y = self.default_y
+
 
     def update(self, deltatime):
         step = self.speed * self.maze.cell_size * deltatime

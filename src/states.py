@@ -60,7 +60,7 @@ class PlayingState:
         self.maze_adapter = self.maze
 
         player_x, player_y = self.maze.center
-        self.player = Player(player_x, player_y, 4, self.maze)
+        self.player = Player(player_x, player_y, 4, game.config["lives"], self.maze)
 
         corners = self.maze.corners
         self.ghosts = [Ghost(x, y, 3, self.maze) for x, y in corners]

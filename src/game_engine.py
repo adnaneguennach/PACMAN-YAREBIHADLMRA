@@ -31,8 +31,3 @@ class GameEngine:
     def run(self):
         playing = PlayingState(self)
         playing.play(self)
-        
-
-    
-
-    

@@ -70,6 +70,16 @@ class Tools:
             dist = (dx**2 + dy**2) ** 0.5
             return dist <= ghost.maze.cell_size // 2
 
+    # @staticmethod
+    # def check_game_over(ghost, player: Player):
+    #     if Tools._touching_player(ghost, player):
+    #         print(player.lives_count, player.lives)
+    #         if player.lives_count < player.lives:
+    #             player.lives_count += 1
+    #             return False
+    #         print("game over")
+    #         return True
+
     @staticmethod
     def check_player_in_zone(ghost, player: Player):
         Tools._update_range(ghost)

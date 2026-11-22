@@ -29,6 +29,8 @@ class Player:
         self.var = 0
         self.index = 0
 
+        self.power = False
+
     def update(self, deltatime):
         step = self.speed * self.maze.cell_size * deltatime
         dx = self.target_px - self.px
@@ -39,6 +41,14 @@ class Player:
             self.py = self.target_py
             self.x = self.target_x
             self.y = self.target_y
+
+            if self.eat_pacgum(self.x, self.y):
+                # engine.score += 1
+                pass
+            if self.eat_super_pacgum(self.x, self.y):
+                # engine.score += 100
+                self.power = True
+                pass
 
             if self.next_dir is not None and self.maze.can_move(
                 self.x, self.y, self.next_dir
@@ -58,6 +68,18 @@ class Player:
         else:
             self.px += (dx / dist) * step
             self.py += (dy / dist) * step
+
+    def eat_pacgum(self, x, y):
+        if self.maze.pacgums[y][x] == 1:
+            self.maze.pacgums[y][x] = 0
+            return True
+        return False
+
+    def eat_super_pacgum(self, x, y):
+        if self.maze.super_pacgums[y][x] == 1:
+            self.maze.super_pacgums[y][x] = 0
+            return True
+        return False
 
     def draw(self, screen, player_png):
         self.spirit = pygame.image.load(player_png)

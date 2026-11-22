@@ -11,10 +11,10 @@ class ConfigParser:
         with open(filename, "r", encoding="utf-8") as f:
             content = ""
             for line in f:
-                if line.strip().startswith("#"):
+                if line.strip().startswith("//"):
                     continue
-                if "#" in line:
-                    line = line.split("#")[0]
+                if "//" in line:
+                    line = line.split("//")[0]
                 content += line
 
             self.config = json.loads(content)

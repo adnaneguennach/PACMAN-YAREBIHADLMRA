@@ -1,29 +1,9 @@
-import random
-from collections import deque
-
-import pygame
-
 from src.maze import Maze
 from src.player import Player
+from collections import deque
 from src.tools import Tools
-
-REVIVE_TIME = 6
-SCARED_SPRITE = "assets/ghost_images/powerup.png"
-RETURN_SPRITE = "assets/ghost_images/ghost_return.png"
-DEAD_SPRITE = "assets/ghost_images/dead.png"
-
-_sprite_cache = {}
-
-
-def _load_sprite(path, size):
-    """Load and scale a sprite once; every later call reuses the surface."""
-    key = (path, size)
-    sprite = _sprite_cache.get(key)
-    if sprite is None:
-        sprite = pygame.image.load(path).convert_alpha()
-        sprite = pygame.transform.scale(sprite, (size, size))
-        _sprite_cache[key] = sprite
-    return sprite
+import random
+import pygame
 
 
 class Ghost:
@@ -42,102 +22,155 @@ class Ghost:
         self.target_px = self.px
         self.target_py = self.py
 
-        self.seen = deque(maxlen=3)
+        self.seen = deque()
         self.range = []
 
         self.player_detectet_in_zone = False
         self.scared = False
         self.eaten = False
         self.start_to_return = False
-
+        
+        self.timer1 = 0
+        self.timer2 = 0
         self.dead_timer = 0
 
-    # ---------- movement helpers ----------
-
-    def _advance(self, speed, deltatime):
-        """Slide toward the target cell.
-
-        Returns True when the ghost is standing exactly on the target cell
-        (so the caller can pick the next one), False while still travelling.
-        """
-        step = speed * deltatime * self.maze.cell_size
+    def random_move(self, deltatime, player: Player):
+        if Tools._touching_player(self, player):
+            print("looooooooser")
+            exit()
+        step = self.speed * deltatime * self.maze.cell_size
         dx = self.target_px - self.px
         dy = self.target_py - self.py
         dist = (dx**2 + dy**2) ** 0.5
 
         if dist <= step:
-            self.px, self.py = self.target_px, self.target_py
-            self.x, self.y = self.target_x, self.target_y
-            return True
-        self.px += (dx / dist) * step
-        self.py += (dy / dist) * step
-        return False
+            self.x = self.target_x
+            self.y = self.target_y
+            self.px = self.target_px
+            self.py = self.target_py
 
-    def _set_target(self, cell):
-        """Aim at a cell next to the one the ghost is standing on."""
-        nx, ny = self.maze.get_dir(cell[0], cell[1], self.x, self.y)
-        self.target_x = self.x + nx
-        self.target_y = self.y + ny
-        self.target_px, self.target_py = self.maze.cell_to_pixel(
-            self.target_x, self.target_y
-        )
+            neighbors = self.maze.reachable_neighbors(self.x, self.y)
+            if not neighbors:
+                return
+            unseen = [n for n in neighbors if n not in self.seen]
+            choises = unseen if unseen else neighbors
+            x, y = random.choice(choises)
+            if len(self.seen) < 3:
+                self.seen.append((x, y))
+            else:
+                self.seen.popleft()
+                self.seen.append((x, y))
 
-    # ---------- behaviours ----------
+            nx, ny = self.maze.get_dir(x, y, self.target_x, self.target_y)
+            self.target_x = self.x + nx
+            self.target_y = self.y + ny
+            self.target_px, self.target_py = self.maze.cell_to_pixel(
+                self.target_x, self.target_y
+            )
 
-    def random_move(self, deltatime):
-        if not self._advance(self.speed, deltatime):
-            return
-        neighbors = self.maze.reachable_neighbors(self.x, self.y)
-        if not neighbors:
-            return
-        unseen = [n for n in neighbors if n not in self.seen]
-        choice = random.choice(unseen or neighbors)
-        self.seen.append(choice)
-        self._set_target(choice)
+        else:
+            self.px += (dx / dist) * step
+            self.py += (dy / dist) * step
 
     def chassing(self, deltatime, player: Player):
-        if not self._advance(self.speed, deltatime):
-            return
-        next_step = Tools.next_step_bfs(
-            (self.x, self.y), (player.x, player.y), self.maze
-        )
-        if next_step:  # None when ghost and player share a cell
-            self._set_target(next_step)
+        if Tools._touching_player(self, player):
+            print("loseeeeeeer")
+            exit()
+
+        step = self.speed * self.maze.cell_size * deltatime
+        dx = self.target_px - self.px
+        dy = self.target_py - self.py
+        dist = (dx**2 + dy**2) ** 0.5
+
+        if dist <= step:
+            self.px = self.target_px
+            self.py = self.target_py
+            self.x = self.target_x
+            self.y = self.target_y
+
+            next_step = Tools.next_step_bfs(
+                (self.x, self.y), (player.x, player.y), self.maze
+            )
+            if not next_step:
+                # makil9ach path f l7ala dyal lghost w lplayer f nefs cell
+                return
+            x, y = next_step
+            nx, ny = self.maze.get_dir(x, y, self.x, self.y)
+            self.target_x = self.x + nx
+            self.target_y = self.y + ny
+            self.target_px, self.target_py = self.maze.cell_to_pixel(
+                self.target_x, self.target_y
+            )
+        else:
+            self.px += (dx / dist) * step
+            self.py += (dy / dist) * step
 
     def running(self, deltatime, player: Player):
-        if (self.x, self.y) not in self.range:
+        if Tools._touching_player(self, player):
+            self.eaten = True
             return
-        if not self._advance(self.speed, deltatime):
-            return
-        best_neighbor = None
-        best_len = -1
-        for neighbor in self.maze.reachable_neighbors(self.x, self.y):
-            path = Tools.shortest_path(neighbor, (player.x, player.y), self.maze)
-            if path and len(path) > best_len:
-                best_len = len(path)
-                best_neighbor = neighbor
-        if best_neighbor is not None:
-            self._set_target(best_neighbor)
+        if (self.x, self.y) in self.range:
+            step = self.speed * deltatime * self.maze.cell_size
+            dx = self.target_px - self.px
+            dy = self.target_py - self.py
+            dist = (dx ** 2 + dy ** 2) ** 0.5
+
+            if dist <= step:
+                self.px = self.target_px
+                self.py = self.target_py
+                self.x = self.target_x
+                self.y = self.target_y
+
+                neighbors = self.maze.reachable_neighbors(self.x, self.y)
+                best_neighbor = None
+                best_dist = -1
+                for neighbor in neighbors:
+                    path = Tools.shortest_path(neighbor, (player.x, player.y), self.maze)
+                    if path and len(path) > best_dist:
+                        best_dist = len(path)
+                        best_neighbor = neighbor
+
+                if best_neighbor is None:
+                    return
+
+                x, y = best_neighbor
+                nx, ny = self.maze.get_dir(x, y, self.x, self.y)
+                self.target_x = self.x + nx
+                self.target_y = self.y + ny
+                self.target_px, self.target_py = self.maze.cell_to_pixel(self.target_x, self.target_y)
+            else:
+                self.px += (dx / dist) * step
+                self.py += (dy / dist) * step
 
     def to_start_and_freez(self, deltatime):
-        if not self._advance(self.dead_speed, deltatime):
-            return
-        home = (self.default_x, self.default_y)
-        if (self.x, self.y) == home:
-            return
-        next_step = Tools.next_step_bfs((self.x, self.y), home, self.maze)
-        if next_step:
-            self._set_target(next_step)
+        step = self.dead_speed * deltatime * self.maze.cell_size
+        dx = self.target_px - self.px
+        dy = self.target_py - self.py
+        dist = (dx ** 2 + dy ** 2) ** 0.5
 
-    # ---------- state ----------
+        if dist <= step:
+            self.px = self.target_px
+            self.py = self.target_py
+            self.x = self.target_x
+            self.y = self.target_y
 
-    def touching(self, player: Player):
-        """The one place that decides "ghost and player are touching"."""
-        return Tools._touching_player(self, player)
+            if (self.x, self.y) == (self.default_x, self.default_y):
+                return
 
-    def eat(self):
-        self.eaten = True
-        self.dead_timer = 0
+            next_move_to_start = Tools.next_step_bfs(
+                (self.x, self.y), (self.default_x, self.default_y), self.maze)
+            if next_move_to_start is None:
+                return
+
+            x, y = next_move_to_start
+            nx, ny = self.maze.get_dir(x, y, self.x, self.y)
+            self.target_x = self.x + nx
+            self.target_y = self.y + ny
+            self.target_px, self.target_py = self.maze.cell_to_pixel(
+                self.target_x, self.target_y)
+        else:
+            self.px += (dx / dist) * step
+            self.py += (dy / dist) * step
 
     def revive(self):
         self.x, self.y = self.default_x, self.default_y
@@ -149,38 +182,120 @@ class Ghost:
         self.eaten = False
         self.player_detectet_in_zone = False
 
-    def update(self, deltatime, player: Player, power_ending=False):
-        """Move the ghost. Collisions and the power timer live in PlayingState."""
+    def update(self, deltatime, player: Player):
         Tools.check_player_in_zone(self, player)
 
         if self.eaten:
             self.to_start_and_freez(deltatime)
             self.dead_timer += deltatime
-            if self.dead_timer >= REVIVE_TIME:
+            if self.dead_timer >= 6:
                 self.revive()
-        elif self.player_detectet_in_zone:
-            if player.power:
+        else:
+            if Tools._touching_player(self, player):
+                if player.power:
+                    self.eaten = True
+                    return
+                print("loser")
+                exit()
+
+            if self.player_detectet_in_zone and not player.power:
+                self.chassing(deltatime, player)
+            elif self.player_detectet_in_zone and player.power:
                 self.running(deltatime, player)
             else:
-                self.chassing(deltatime, player)
+                self.random_move(deltatime, player)
+        if player.power:
+            self.timer1 += deltatime
+            self.timer2 += deltatime
+            if self.timer2 >= 4.5:
+                self.timer2 = 0
+                self.start_to_return = True
+            if self.timer1 >= 6:
+                self.timer1 = 0
+                player.power = False
+                self.start_to_return = False
         else:
-            self.random_move(deltatime)
+            self.timer1 = 0
+            self.timer2 = 0
 
-        self.scared = player.power and not self.eaten
-        self.start_to_return = self.scared and power_ending
+    #___________________Draw_assi_adnane___________________
+    # khassni nm7i player mn lparam
+    def normal_mode(self, screen, ghost_png):
+        self.spirite = pygame.image.load(ghost_png)
+        self.spirite = pygame.transform.scale(
+            self.spirite,
+            (
+                self.maze.cell_size - self.maze.cell_size // 4,
+                self.maze.cell_size - self.maze.cell_size // 4,
+            ),
+        )
+        screen.blit(
+            self.spirite,
+            (
+                self.px + self.maze.cell_size // 6,
+                self.py + self.maze.cell_size // 6,
+            ),
+        )
 
-    # ---------- drawing ----------
+    def dead_mode(self, screen, ghost_png):
+        self.spirite = pygame.image.load(ghost_png)
+        self.spirite = pygame.transform.scale(
+            self.spirite,
+            (
+                self.maze.cell_size - self.maze.cell_size // 4,
+                self.maze.cell_size - self.maze.cell_size // 4,
+            ),
+        )
+        screen.blit(
+            self.spirite,
+            (
+                self.px + self.maze.cell_size // 6,
+                self.py + self.maze.cell_size // 6,
+            ),
+        )
 
-    def sprite_path(self, normal_png):
-        if self.eaten:
-            return DEAD_SPRITE
-        if self.start_to_return:
-            return RETURN_SPRITE
-        if self.scared:
-            return SCARED_SPRITE
-        return normal_png
+    def scare_mode(self, screen, ghost_png):
+        self.spirite = pygame.image.load(ghost_png)
+        self.spirite = pygame.transform.scale(
+            self.spirite,
+            (
+                self.maze.cell_size - self.maze.cell_size // 4,
+                self.maze.cell_size - self.maze.cell_size // 4,
+            ),
+        )
+        screen.blit(
+            self.spirite,
+            (
+                self.px + self.maze.cell_size // 6,
+                self.py + self.maze.cell_size // 6,
+            ),
+        )
 
-    def draw(self, screen, normal_png):
-        cell = self.maze.cell_size
-        sprite = _load_sprite(self.sprite_path(normal_png), cell - cell // 4)
-        screen.blit(sprite, (self.px + cell // 6, self.py + cell // 6))
+    def ghost_return(self, screen, ghost_png):
+        self.spirite = pygame.image.load(ghost_png)
+        self.spirite = pygame.transform.scale(
+            self.spirite,
+            (
+                self.maze.cell_size - self.maze.cell_size // 4,
+                self.maze.cell_size - self.maze.cell_size // 4,
+            ),
+        )
+        screen.blit(
+            self.spirite,
+            (
+                self.px + self.maze.cell_size // 6,
+                self.py + self.maze.cell_size // 6,
+            ),
+        )
+        
+
+    def draw(self, screen, ghost_png, player: Player):
+        if not player.power:
+            self.normal_mode(screen, ghost_png)
+        elif player.power and not self.eaten:
+            if not self.start_to_return:
+                self.scare_mode(screen, "assets/ghost_images/powerup.png")
+            else:
+                self.ghost_return(screen, "assets/ghost_images/ghost_return.png")
+        elif self.eaten:
+            self.dead_mode(screen, "assets/ghost_images/dead.png")

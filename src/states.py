@@ -1,21 +1,14 @@
-"""Pygame state machine: menu, playing, level transition, game over, victory."""
-
+import time
 import pygame
+from mazegenerator import MazeGenerator
 
-from src.events import LEVEL_CLEARED, PLAYER_DIED, EventManager
-from src.ghost import Ghost
+from src.config import ConfigParser
 from src.maze import EAST, NORTH, SOUTH, WEST, Maze
 from src.player import Player
+from src.ghost import Ghost
 
+FPS = 60
 CELL_SIZE = 40
-PLAYER_SPEED = 4
-GHOST_SPEED = 3
-
-POWER_DURATION = 6.0  # seconds a power pellet lasts
-POWER_WARNING = 4.5   # after this, scared ghosts show the "about to end" sprite
-
-# One entry per maze corner, in the same order as Maze.corners.
-GHOST_COLORS = ("red", "pink", "blue", "orange")
 
 KEY_TO_DIRECTION = {
     pygame.K_UP: NORTH,
@@ -23,191 +16,97 @@ KEY_TO_DIRECTION = {
     pygame.K_DOWN: SOUTH,
     pygame.K_LEFT: WEST,
 }
-
-_fonts = {}
-
-
-def get_font(size):
-    """Fonts are loaded from disk, so build each size only once."""
-    if size not in _fonts:
-        _fonts[size] = pygame.font.Font(None, size)
-    return _fonts[size]
+GHOST_COLORS = ("red", "pink", "blue", "orange")
 
 
-class State:
+
+# adnane u need to add your states here
+
+
+class PlayingState:
+
     def __init__(self, game):
-        self.game = game
+        self.level_rank = 0
+        self.init_playing(game)
 
-    def enter(self, **kwargs):
-        pass
+    @property
+    def check_win(self):
+        if self.maze is None:
+            return False
 
-    def exit(self):
-        pass
-
-    def handle_event(self, event):
-        pass
-
-    def update(self, deltatime):
-        pass
-
-    def draw(self, screen):
-        pass
-
-
-class StateMachine:
-    def __init__(self):
-        self.states = {}
-        self.current = None
-
-    def add(self, name, state):
-        self.states[name] = state
-
-    def change(self, name, **kwargs):
-        if self.current:
-            self.current.exit()
-        self.current = self.states[name]
-        self.current.enter(**kwargs)
-
-
-class TextState(State):
-    """Base for simple full-screen text states."""
-
-    def _text(self, screen, text, size, y_offset=0, color="white"):
-        surface = get_font(size).render(text, True, color)
-        rect = surface.get_rect(
-            center=(screen.get_width() // 2,
-                    screen.get_height() // 2 + y_offset)
+        super_pacgum_zero = sum(
+            sublist.count(0) for sublist in self.maze.super_pacgums
         )
-        screen.blit(surface, rect)
-
-
-class MenuState(TextState):
-    def handle_event(self, event):
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-            self.game.new_game()
-
-    def draw(self, screen):
-        screen.fill("black")
-        self._text(screen, "PACMAN", 120, -60, "yellow")
-        self._text(screen, "Press ENTER to start - ESC to quit", 40, 40)
-
-
-class TransitionState(TextState):
-    DURATION = 1.5
-
-    def enter(self, message="", **kwargs):
-        self.message = message
-        self.timer = self.DURATION
-
-    def update(self, deltatime):
-        self.timer -= deltatime
-        if self.timer <= 0:
-            self.game.states.change("playing")
-
-    def draw(self, screen):
-        screen.fill("black")
-        self._text(screen, self.message, 60, -30, "yellow")
-        self._text(
-            screen,
-            f"Level {self.game.level_index + 1} - Lives: {self.game.lives}",
-            40, 30,
+        pacgum_zero = sum(
+            sublist.count(0) for sublist in self.maze.pacgums
         )
 
+        if (
+            super_pacgum_zero == self.maze.width * self.maze.height
+            and pacgum_zero == self.maze.width * self.maze.height
+        ):
+            return True
 
-class EndState(TextState):
-    title = ""
-
-    def handle_event(self, event):
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-            self.game.states.change("menu")
-
-    def draw(self, screen):
-        screen.fill("black")
-        self._text(screen, self.title, 100, -50, "red")
-        self._text(screen, f"Score: {self.game.score}", 50, 30)
-        self._text(screen, "Press ENTER to return to the menu", 36, 90)
-
-
-class GameOverState(EndState):
-    title = "GAME OVER"
-
-
-class VictoryState(EndState):
-    title = "YOU WIN!"
-
-
-class PlayingState(State):
-    def init_ghosts(self, level):
-        speed = level.get("ghost_speed", GHOST_SPEED)
-        corners = self.maze.corners[:len(GHOST_COLORS)]
-        self.ghosts = [Ghost(x, y, speed, self.maze) for x, y in corners]
-
-    def enter(self, **kwargs):
-        level = self.game.current_level()
-        self.maze: Maze = self.game.build_maze(level)
-        px, py = self.maze.center
-        self.player = Player(px, py, PLAYER_SPEED, self.maze)
-
-        self.init_ghosts(level)
-
-        self.power_timer = 0.0
-        self.finished = False
-
-    def handle_event(self, event):
-        if event.type == pygame.KEYDOWN and event.key in KEY_TO_DIRECTION:
-            self.player.next_dir = KEY_TO_DIRECTION[event.key]
-
-    def _update_power(self, deltatime):
-        """Single power-up clock for the whole level (ghosts only read it)."""
-        if self.player.power:
-            self.power_timer += deltatime
-            if self.power_timer >= POWER_DURATION:
-                self.player.power = False
-        return self.player.power and self.power_timer >= POWER_WARNING
-
-    def _resolve_ghost_hits(self):
-        """Handle every ghost touching the player. True if the player died."""
-        for ghost in self.ghosts:
-            if ghost.eaten or not ghost.touching(self.player):
-                continue
-            if self.player.power:
-                ghost.eat()
-            else:
-                self.finished = True
-                EventManager.post(PLAYER_DIED)
-                return True
         return False
 
-    def update(self, deltatime):
-        if self.finished:
-            return
+    def init_playing(self, game):
+        level = game.config["levels"][self.level_rank]
 
-        self.player.update(deltatime)
+        walls = MazeGenerator(
+            size=(level["width"], level["height"]), perfect=False
+        ).maze
 
-        cell = (round(self.player.x), round(self.player.y))
-        score, power = self.maze.eat_pellet(*cell)
-        self.game.score += score
-        if power:
-            self.player.power = True
-            self.power_timer = 0.0  # eating another pellet restarts the clock
+        self.maze = Maze(walls, CELL_SIZE, game.screen.get_size())
+        self.maze_adapter = self.maze
 
-        power_ending = self._update_power(deltatime)
+        player_x, player_y = self.maze.center
+        self.player = Player(player_x, player_y, 4, self.maze)
 
-        for ghost in self.ghosts:
-            ghost.update(deltatime, self.player, power_ending)
+        corners = self.maze.corners
+        self.ghosts = [Ghost(x, y, 3, self.maze) for x, y in corners]
 
-        if self._resolve_ghost_hits():
-            return
-        if self.maze.is_cleared():
-            self.finished = True
-            EventManager.post(LEVEL_CLEARED)
 
-    def draw(self, screen):
-        screen.fill("black")
-        self.maze.draw(screen)
-        self.player.draw_and_switch(screen, self.game.deltatime)
+    def _handle_playing_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return False
+
+                if event.key in KEY_TO_DIRECTION:
+                    self.player.next_dir = KEY_TO_DIRECTION[event.key]
+
+        return True
+
+    def play(self, game):
+        clock = pygame.time.Clock()
+
+        while self._handle_playing_events():
+            deltatime = clock.tick(FPS) / 1000
+
+            self.player.update(deltatime)
+            for ghost in self.ghosts:
+                ghost.update(deltatime, self.player)
+
+            if self.check_win:
+                if self.level_rank + 1 < len(game.config["levels"]):
+                    self.level_rank += 1
+                    self.init_playing(game)
+                else:
+                    exit()
+
+            self._draw(deltatime, game)
+
+        pygame.quit()
+
+    def _draw(self, deltatime, game):
+        game.screen.fill("black")
+
+        self.maze.draw(game.screen)
+        self.player.draw_and_switch(game.screen, deltatime)
         for ghost, color in zip(self.ghosts, GHOST_COLORS):
-            ghost.draw(screen, f"assets/ghost_images/{color}.png")
-        hud = f"Score: {self.game.score}   Lives: {self.game.lives}   " \
-              f"Level: {self.game.level_index + 1}"
-        screen.blit(get_font(32).render(hud, True, "white"), (10, 10))
+            ghost.draw(game.screen, f"assets/ghost_images/{color}.png", self.player)
+
+        pygame.display.flip()

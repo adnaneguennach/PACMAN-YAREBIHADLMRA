@@ -1,4 +1,3 @@
-import math
 import pygame
 from src.maze import Maze
 
@@ -35,13 +34,11 @@ class Player:
 
         self.power = False
 
-
     def revive(self):
         self.x = self.default_x
         self.y = self.default_y
 
-
-    def update(self, deltatime):
+    def update(self, deltatime, play,  game):
         step = self.speed * self.maze.cell_size * deltatime
         dx = self.target_px - self.px
         dy = self.target_py - self.py
@@ -53,10 +50,10 @@ class Player:
             self.y = self.target_y
 
             if self.eat_pacgum(self.x, self.y):
-                # engine.score += 1
+                play.score += game.points_per_pacgum
                 pass
             if self.eat_super_pacgum(self.x, self.y):
-                # engine.score += 100
+                play.score += game.points_per_super_pacgum
                 self.power = True
                 pass
 

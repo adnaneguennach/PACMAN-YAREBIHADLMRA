@@ -14,7 +14,7 @@ class Ghost:
         self.default_x = x
         self.default_y = y
         self.px, self.py = self.maze.cell_to_pixel(self.x, self.y)
-        self.speed = speed
+        self.speed = speed / 2
         self.dead_speed = speed * 4
 
         self.target_x = x
@@ -105,8 +105,10 @@ class Ghost:
             self.px += (dx / dist) * step
             self.py += (dy / dist) * step
 
-    def running(self, deltatime, player: Player):
+    def running(self, deltatime, player: Player, play, game):
         if Tools._touching_player(self, player):
+            play.score += game.points_per_ghost
+            print(play.score, game.points_per_ghost)
             self.eaten = True
             return
         if (self.x, self.y) in self.range:
@@ -182,7 +184,7 @@ class Ghost:
         self.eaten = False
         self.player_detectet_in_zone = False
 
-    def update(self, deltatime, player: Player):
+    def update(self, deltatime, player: Player, play, game):
         Tools.check_player_in_zone(self, player)
 
         if self.eaten:
@@ -201,25 +203,23 @@ class Ghost:
             if self.player_detectet_in_zone and not player.power:
                 self.chassing(deltatime, player)
             elif self.player_detectet_in_zone and player.power:
-                self.running(deltatime, player)
+                self.running(deltatime, player, play, game)
             else:
                 self.random_move(deltatime, player)
         if player.power:
             self.timer1 += deltatime
             self.timer2 += deltatime
             if self.timer2 >= 4.5:
-                self.timer2 = 0
+                self.timer2 = 0.0
                 self.start_to_return = True
             if self.timer1 >= 6:
-                self.timer1 = 0
+                self.timer1 = 0.0
                 player.power = False
-                self.start_to_return = False
         else:
-            self.timer1 = 0
-            self.timer2 = 0
+            self.start_to_return = False
+            self.timer1 = 0.0
+            self.timer2 = 0.0
 
-    #___________________Draw_assi_adnane___________________
-    # khassni nm7i player mn lparam
     def normal_mode(self, screen, ghost_png):
         self.spirite = pygame.image.load(ghost_png)
         self.spirite = pygame.transform.scale(
@@ -287,10 +287,9 @@ class Ghost:
                 self.py + self.maze.cell_size // 6,
             ),
         )
-        
 
     def draw(self, screen, ghost_png, player: Player):
-        if not player.power:
+        if not player.power and not self.eaten:
             self.normal_mode(screen, ghost_png)
         elif player.power and not self.eaten:
             if not self.start_to_return:

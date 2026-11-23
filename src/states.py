@@ -2,7 +2,6 @@ import time
 import pygame
 from mazegenerator import MazeGenerator
 
-from src.config import ConfigParser
 from src.maze import EAST, NORTH, SOUTH, WEST, Maze
 from src.player import Player
 from src.ghost import Ghost
@@ -15,6 +14,10 @@ KEY_TO_DIRECTION = {
     pygame.K_RIGHT: EAST,
     pygame.K_DOWN: SOUTH,
     pygame.K_LEFT: WEST,
+    pygame.K_w: NORTH,
+    pygame.K_d: EAST,
+    pygame.K_s: SOUTH,
+    pygame.K_a: WEST,
 }
 GHOST_COLORS = ("red", "pink", "blue", "orange")
 
@@ -28,6 +31,8 @@ class PlayingState:
     def __init__(self, game):
         self.level_rank = 0
         self.init_playing(game)
+        self.score = 0
+        self.lives = game.lives
 
     @property
     def check_win(self):
@@ -50,7 +55,7 @@ class PlayingState:
         return False
 
     def init_playing(self, game):
-        level = game.config["levels"][self.level_rank]
+        level = game.levels[self.level_rank]
 
         walls = MazeGenerator(
             size=(level["width"], level["height"]), perfect=False
@@ -64,7 +69,6 @@ class PlayingState:
 
         corners = self.maze.corners
         self.ghosts = [Ghost(x, y, 3, self.maze) for x, y in corners]
-
 
     def _handle_playing_events(self):
         for event in pygame.event.get():
@@ -82,13 +86,13 @@ class PlayingState:
 
     def play(self, game):
         clock = pygame.time.Clock()
-
+        # for i in range(self.lives):
         while self._handle_playing_events():
             deltatime = clock.tick(FPS) / 1000
 
-            self.player.update(deltatime)
+            self.player.update(deltatime, self, game)
             for ghost in self.ghosts:
-                ghost.update(deltatime, self.player)
+                ghost.update(deltatime, self.player, self, game)
 
             if self.check_win:
                 if self.level_rank + 1 < len(game.config["levels"]):
@@ -96,7 +100,6 @@ class PlayingState:
                     self.init_playing(game)
                 else:
                     exit()
-
             self._draw(deltatime, game)
 
         pygame.quit()
@@ -104,6 +107,7 @@ class PlayingState:
     def _draw(self, deltatime, game):
         game.screen.fill("black")
 
+        self.maze._render_hud(game.screen, self.score, self.level_rank, game.lives)
         self.maze.draw(game.screen)
         self.player.draw_and_switch(game.screen, deltatime)
         for ghost, color in zip(self.ghosts, GHOST_COLORS):

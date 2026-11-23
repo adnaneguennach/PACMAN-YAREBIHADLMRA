@@ -22,10 +22,10 @@ class GameEngine:
         self.points_per_pacgum = self.config["points_per_pacgum"]
         self.points_per_super_pacgum = self.config["points_per_super_pacgum"]
         self.points_per_ghost = self.config["points_per_ghost"]
-        self.level_max_time = self.config["level_max_time"]
         self.lives = self.config["lives"]
-        self.palyer_speed = self.config["player_speed"]
+        self.player_speed = self.config["player_speed"]
         self.ghost_speed = self.config["ghost_speed"]
+        self.levels = self.config["levels"]
 
 
     def run(self):

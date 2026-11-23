@@ -108,7 +108,7 @@ class Maze:
         if maze_w > self.screen_w or maze_h > self.screen_h:
             raise ValueError("Maze is too large for the screen resolution.")
         self.offset_x = (self.screen_w - maze_w) // 2
-        self.offset_y = (self.screen_h - maze_h) // 2
+        self.offset_y = (self.screen_h - maze_h) // 1.2
 
     def _render_maze(self, cell_value, x, y, screen):
         pix, piy = self.cell_to_pixel(x, y)
@@ -160,6 +160,21 @@ class Maze:
             pygame.draw.circle(
                 screen, (255, 255, 255), (center_x, center_y), 10
             )
+
+    def _render_hud(self, screen, score, lives, level):
+        if not hasattr(self, "font"):
+            pygame.font.init()
+        self.font = pygame.font.SysFont(None, 36)
+
+        start_pointx = self.offset_x
+        start_pointy = self.offset_y - 40
+
+        hud_string = (
+            f"Score: {score}          Lives: {lives}          Level: {level}"
+        )
+        text_surface = self.font.render(hud_string, True, (255, 255, 255))
+
+        screen.blit(text_surface, (start_pointx, start_pointy))
 
     def draw(self, screen):
         for row_index, row in enumerate(self.walls):

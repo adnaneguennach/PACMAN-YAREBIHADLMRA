@@ -44,7 +44,12 @@ class Maze:
             for j in range(self.height)
         ]
 
-        self._center_on_screen(screen_size)
+        self.hud_size = 40
+        try:
+            self._center_on_screen(screen_size)
+        except ValueError as e:
+            print(e)
+            exit()
 
     # ---------- logic ----------
 
@@ -105,23 +110,15 @@ class Maze:
         self.screen_w, self.screen_h = screen_size
         maze_w = self.width * self.cell_size
         maze_h = self.height * self.cell_size
-        if maze_w > self.screen_w or maze_h > self.screen_h:
+        print(maze_w, maze_h + self.hud_size)
+        print(self.screen_w, self.screen_h)
+        if maze_w >= self.screen_w or maze_h + self.hud_size >= self.screen_h:
             raise ValueError("Maze is too large for the screen resolution.")
         self.offset_x = (self.screen_w - maze_w) // 2
-        self.offset_y = (self.screen_h - maze_h) // 1.2
+        self.offset_y = ((self.screen_h - maze_h) // 2) + self.hud_size
 
     def _render_maze(self, cell_value, x, y, screen):
         pix, piy = self.cell_to_pixel(x, y)
-
-        if (
-            pix + self.cell_size >= self.screen_w
-            or piy + self.cell_size >= self.screen_h
-        ):
-            print(
-                "Error: maze is too large for the current screen "
-                "resolution."
-            )
-            exit()
 
         if cell_value == 15:
             pygame.draw.rect(
@@ -167,13 +164,13 @@ class Maze:
         self.font = pygame.font.SysFont(None, 36)
 
         start_pointx = self.offset_x
-        start_pointy = self.offset_y - 40
+        start_pointy = self.offset_y - self.hud_size
 
         hud_string = (
             f"Score: {score}          Lives: {lives}          Level: {level + 1}"
         )
         text_surface = self.font.render(hud_string, True, (255, 255, 255))
-
+        print(text_surface)
         screen.blit(text_surface, (start_pointx, start_pointy))
 
     def draw(self, screen):
@@ -204,7 +201,10 @@ class Maze:
                         ),
                         self.cell_size // 5,
                     )
-
-                self._render_maze(
-                    cell_value, col_index, row_index, screen
-                )
+                try:
+                    self._render_maze(
+                        cell_value, col_index, row_index, screen
+                    )
+                except ValueError as e:
+                    print(e)
+                    exit()

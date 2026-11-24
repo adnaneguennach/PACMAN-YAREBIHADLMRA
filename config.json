@@ -14,7 +14,7 @@
     "seed": 42,
 
     "levels": [
-        {"width": 5, "height": 5},
+        {"width": 33, "height": 17},
         {"width": 5, "height": 5},
         {"width": 17, "height": 17},
         {"width": 17, "height": 17},

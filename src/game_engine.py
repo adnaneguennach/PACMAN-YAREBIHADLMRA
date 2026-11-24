@@ -1,3 +1,4 @@
+import random
 import pygame
 from src.config import ConfigParser
 from src.maze import EAST, NORTH, SOUTH, WEST, Maze

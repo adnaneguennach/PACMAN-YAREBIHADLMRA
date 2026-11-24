@@ -1,4 +1,5 @@
 import pygame
+import random
 from mazegenerator import MazeGenerator
 
 from src.maze import EAST, NORTH, SOUTH, WEST, Maze
@@ -32,7 +33,7 @@ class PlayingState:
     def init_playing(self, game):
         level = game.levels[game.level_rank]
         walls = MazeGenerator(
-            size=(level["width"], level["height"]), perfect=False
+            size=(level["width"], level["height"]), perfect=False, seed=game.seed
         ).maze
         self.maze = Maze(walls, CELL_SIZE, game.screen.get_size())
         self.maze_adapter = self.maze
@@ -68,7 +69,6 @@ class PlayingState:
             return True
 
         return False
-
 
     def _handle_playing_events(self):
         for event in pygame.event.get():

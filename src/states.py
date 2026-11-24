@@ -1,9 +1,9 @@
-import time
 import pygame
 from mazegenerator import MazeGenerator
 
 from src.maze import EAST, NORTH, SOUTH, WEST, Maze
 from src.player import Player
+from src.tools import Tools
 from src.ghost import Ghost
 
 FPS = 60
@@ -25,14 +25,29 @@ GHOST_COLORS = ("red", "pink", "blue", "orange")
 
 # adnane u need to add your states here
 
-
 class PlayingState:
-
     def __init__(self, game):
-        self.level_rank = 0
         self.init_playing(game)
-        self.score = 0
-        self.lives = game.lives
+
+    def init_playing(self, game):
+        level = game.levels[game.level_rank]
+        walls = MazeGenerator(
+            size=(level["width"], level["height"]), perfect=False
+        ).maze
+        self.maze = Maze(walls, CELL_SIZE, game.screen.get_size())
+        self.maze_adapter = self.maze
+        player_x, player_y = self.maze.center
+        self.player = Player(player_x, player_y, 4, self.maze)
+
+        corners = self.maze.corners
+        self.ghosts = [Ghost(x, y, 3, self.maze) for x, y in corners]
+
+    def revive_player(self, game):
+        player_x, player_y = self.maze.center
+        self.player = Player(player_x, player_y, 4, self.maze)
+
+        corners = self.maze.corners
+        self.ghosts = [Ghost(x, y, 3, self.maze) for x, y in corners]
 
     @property
     def check_win(self):
@@ -54,21 +69,6 @@ class PlayingState:
 
         return False
 
-    def init_playing(self, game):
-        level = game.levels[self.level_rank]
-
-        walls = MazeGenerator(
-            size=(level["width"], level["height"]), perfect=False
-        ).maze
-
-        self.maze = Maze(walls, CELL_SIZE, game.screen.get_size())
-        self.maze_adapter = self.maze
-
-        player_x, player_y = self.maze.center
-        self.player = Player(player_x, player_y, 4, game.config["lives"], self.maze)
-
-        corners = self.maze.corners
-        self.ghosts = [Ghost(x, y, 3, self.maze) for x, y in corners]
 
     def _handle_playing_events(self):
         for event in pygame.event.get():
@@ -84,19 +84,61 @@ class PlayingState:
 
         return True
 
+    def update(self, deltatime, ghost: Ghost, player: Player, game):
+        Tools.check_player_in_zone(ghost, player)
+
+        if ghost.eaten:
+            ghost.to_start_and_freez(deltatime)
+            ghost.dead_timer += deltatime
+            if ghost.dead_timer >= 6:
+                ghost.revive()
+        else:
+            if Tools._touching_player(ghost, player):
+                if player.power:
+                    game.score += game.points_per_ghost
+                    ghost.eaten = True
+                    return
+                elif game.lives - 1 > 0:
+                    game.lives -= 1
+                    self.revive_player(game)
+                else:
+                    print(game.lives)
+                    print("loser")
+                    exit()
+
+            if ghost.player_detectet_in_zone and not player.power:
+                ghost.chassing(deltatime, player)
+            elif ghost.player_detectet_in_zone and player.power:
+                ghost.running(deltatime, player, game)
+            else:
+                ghost.random_move(deltatime, player)
+        if player.power:
+            ghost.timer1 += deltatime
+            ghost.timer2 += deltatime
+            if ghost.timer2 >= 4.5:
+                ghost.timer2 = 0.0
+                ghost.start_to_return = True
+            if ghost.timer1 >= 6:
+                ghost.timer1 = 0.0
+                player.power = False
+        else:
+            ghost.start_to_return = False
+            ghost.timer1 = 0.0
+            ghost.timer2 = 0.0
+
     def play(self, game):
         clock = pygame.time.Clock()
-        # for i in range(self.lives):
         while self._handle_playing_events():
             deltatime = clock.tick(FPS) / 1000
 
-            self.player.update(deltatime, self, game)
+            self.player.update(deltatime, game)
             for ghost in self.ghosts:
-                ghost.update(deltatime, self.player, self, game)
+                self.update(deltatime, ghost, self.player, game)
 
             if self.check_win:
-                if self.level_rank + 1 < len(game.config["levels"]):
-                    self.level_rank += 1
+                if game.level_rank < len(game.config["levels"]):
+                    game.level_rank += 1
+                    game.lives = game.mount_lives
                     self.init_playing(game)
                 else:
                     exit()
@@ -107,10 +149,12 @@ class PlayingState:
     def _draw(self, deltatime, game):
         game.screen.fill("black")
 
-        self.maze._render_hud(game.screen, self.score, self.level_rank, game.lives)
+        self.maze._render_hud(
+            game.screen, game.score, game.lives, game.level_rank)
         self.maze.draw(game.screen)
         self.player.draw_and_switch(game.screen, deltatime)
         for ghost, color in zip(self.ghosts, GHOST_COLORS):
-            ghost.draw(game.screen, f"assets/ghost_images/{color}.png", self.player)
+            ghost.draw(
+                game.screen, f"assets/ghost_images/{color}.png", self.player)
 
         pygame.display.flip()

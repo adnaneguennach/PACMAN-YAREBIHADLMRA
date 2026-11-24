@@ -14,7 +14,8 @@ class GameEngine:
         self.level_rank = 0
         self.check_win = False
         self.config_adapter()
-
+        self.score = 0
+        self.level_rank = 0
 
     def config_adapter(self):
         self.highscore_filename = self.config["highscore_filename"]
@@ -22,11 +23,11 @@ class GameEngine:
         self.points_per_pacgum = self.config["points_per_pacgum"]
         self.points_per_super_pacgum = self.config["points_per_super_pacgum"]
         self.points_per_ghost = self.config["points_per_ghost"]
+        self.mount_lives = self.config["lives"]
         self.lives = self.config["lives"]
         self.player_speed = self.config["player_speed"]
         self.ghost_speed = self.config["ghost_speed"]
         self.levels = self.config["levels"]
-
 
     def run(self):
         playing = PlayingState(self)

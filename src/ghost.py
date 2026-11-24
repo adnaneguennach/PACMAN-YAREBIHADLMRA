@@ -35,9 +35,9 @@ class Ghost:
         self.dead_timer = 0
 
     def random_move(self, deltatime, player: Player):
-        if Tools._touching_player(self, player):
-            print("looooooooser")
-            exit()
+        # if Tools._touching_player(self, player):
+        #     print("looooooooser")
+        #     exit()
         step = self.speed * deltatime * self.maze.cell_size
         dx = self.target_px - self.px
         dy = self.target_py - self.py
@@ -73,9 +73,9 @@ class Ghost:
             self.py += (dy / dist) * step
 
     def chassing(self, deltatime, player: Player):
-        if Tools._touching_player(self, player):
-            print("loseeeeeeer")
-            exit()
+        # if Tools._touching_player(self, player):
+        #     print("loseeeeeeer")
+        #     exit()
 
         step = self.speed * self.maze.cell_size * deltatime
         dx = self.target_px - self.px
@@ -105,12 +105,12 @@ class Ghost:
             self.px += (dx / dist) * step
             self.py += (dy / dist) * step
 
-    def running(self, deltatime, player: Player, play, game):
-        if Tools._touching_player(self, player):
-            play.score += game.points_per_ghost
-            print(play.score, game.points_per_ghost)
-            self.eaten = True
-            return
+    def running(self, deltatime, player: Player, game):
+        # if Tools._touching_player(self, player):
+        #     print("--------------------------------")
+        #     game.score += game.points_per_ghost
+        #     self.eaten = True
+        #     return
         if (self.x, self.y) in self.range:
             step = self.speed * deltatime * self.maze.cell_size
             dx = self.target_px - self.px
@@ -184,41 +184,47 @@ class Ghost:
         self.eaten = False
         self.player_detectet_in_zone = False
 
-    def update(self, deltatime, player: Player, play, game):
-        Tools.check_player_in_zone(self, player)
+    # def update(self, deltatime, player: Player, game):
+    #     Tools.check_player_in_zone(self, player)
 
-        if self.eaten:
-            self.to_start_and_freez(deltatime)
-            self.dead_timer += deltatime
-            if self.dead_timer >= 6:
-                self.revive()
-        else:
-            if Tools._touching_player(self, player):
-                if player.power:
-                    self.eaten = True
-                    return
-                elif player.lives_count < player.lives:
-                    player.revive()
+    #     if self.eaten:
+    #         self.to_start_and_freez(deltatime)
+    #         self.dead_timer += deltatime
+    #         if self.dead_timer >= 6:
+    #             self.revive()
+    #     else:
+    #         if Tools._touching_player(self, player):
+    #             if player.power:
+    #                 game.score += game.points_per_ghost 
+    #                 self.eaten = True
+    #                 return
+    #             elif game.lives - 1 > 0:
+    #                 game.lives -= 1
+    #                 player.revive()
+    #             else:
+    #                 print(game.lives)
+    #                 print("loser")
+    #                 exit()
 
-            if self.player_detectet_in_zone and not player.power:
-                self.chassing(deltatime, player)
-            elif self.player_detectet_in_zone and player.power:
-                self.running(deltatime, player, play, game)
-            else:
-                self.random_move(deltatime, player)
-        if player.power:
-            self.timer1 += deltatime
-            self.timer2 += deltatime
-            if self.timer2 >= 4.5:
-                self.timer2 = 0.0
-                self.start_to_return = True
-            if self.timer1 >= 6:
-                self.timer1 = 0.0
-                player.power = False
-        else:
-            self.start_to_return = False
-            self.timer1 = 0.0
-            self.timer2 = 0.0
+    #         if self.player_detectet_in_zone and not player.power:
+    #             self.chassing(deltatime, player)
+    #         elif self.player_detectet_in_zone and player.power:
+    #             self.running(deltatime, player, game)
+    #         else:
+    #             self.random_move(deltatime, player)
+    #     if player.power:
+    #         self.timer1 += deltatime
+    #         self.timer2 += deltatime
+    #         if self.timer2 >= 4.5:
+    #             self.timer2 = 0.0
+    #             self.start_to_return = True
+    #         if self.timer1 >= 6:
+    #             self.timer1 = 0.0
+    #             player.power = False
+    #     else:
+    #         self.start_to_return = False
+    #         self.timer1 = 0.0
+    #         self.timer2 = 0.0
 
     def normal_mode(self, screen, ghost_png):
         self.spirite = pygame.image.load(ghost_png)

@@ -170,7 +170,7 @@ class Maze:
         start_pointy = self.offset_y - 40
 
         hud_string = (
-            f"Score: {score}          Lives: {lives}          Level: {level}"
+            f"Score: {score}          Lives: {lives}          Level: {level + 1}"
         )
         text_surface = self.font.render(hud_string, True, (255, 255, 255))
 

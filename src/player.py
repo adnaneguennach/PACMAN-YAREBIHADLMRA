@@ -5,7 +5,7 @@ from src.maze import Maze
 class Player:
     DIRECTION_ANGLES = {1: 270, 2: 0, 4: 90, 8: 180}
 
-    def __init__(self, x, y, speed, lives, maze: Maze):
+    def __init__(self, x, y, speed, maze: Maze):
         self.maze = maze
         self.x = x
         self.y = y
@@ -13,8 +13,6 @@ class Player:
         self.default_y = y
         self.px, self.py = self.maze.cell_to_pixel(self.x, self.y)
         self.speed = speed
-        self.lives = lives
-        self.lives_count = 0
 
         self.target_x = self.x
         self.target_y = self.y
@@ -37,8 +35,12 @@ class Player:
     def revive(self):
         self.x = self.default_x
         self.y = self.default_y
+        self.px, self.py = self.maze.cell_to_pixel(self.x, self.y)
+        self.target_x = self.x
+        self.target_y = self.y
+        self.target_px, self.target_py = self.maze.cell_to_pixel(self.x, self.y)
 
-    def update(self, deltatime, play,  game):
+    def update(self, deltatime, game):
         step = self.speed * self.maze.cell_size * deltatime
         dx = self.target_px - self.px
         dy = self.target_py - self.py
@@ -50,10 +52,10 @@ class Player:
             self.y = self.target_y
 
             if self.eat_pacgum(self.x, self.y):
-                play.score += game.points_per_pacgum
+                game.score += game.points_per_pacgum
                 pass
             if self.eat_super_pacgum(self.x, self.y):
-                play.score += game.points_per_super_pacgum
+                game.score += game.points_per_super_pacgum
                 self.power = True
                 pass
 

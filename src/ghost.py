@@ -73,10 +73,6 @@ class Ghost:
             self.py += (dy / dist) * step
 
     def chassing(self, deltatime, player: Player):
-        # if Tools._touching_player(self, player):
-        #     print("loseeeeeeer")
-        #     exit()
-
         step = self.speed * self.maze.cell_size * deltatime
         dx = self.target_px - self.px
         dy = self.target_py - self.py

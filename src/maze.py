@@ -110,8 +110,6 @@ class Maze:
         self.screen_w, self.screen_h = screen_size
         maze_w = self.width * self.cell_size
         maze_h = self.height * self.cell_size
-        print(maze_w, maze_h + self.hud_size)
-        print(self.screen_w, self.screen_h)
         if maze_w >= self.screen_w or maze_h + self.hud_size >= self.screen_h:
             raise ValueError("Maze is too large for the screen resolution.")
         self.offset_x = (self.screen_w - maze_w) // 2
@@ -170,7 +168,6 @@ class Maze:
             f"Score: {score}          Lives: {lives}          Level: {level + 1}"
         )
         text_surface = self.font.render(hud_string, True, (255, 255, 255))
-        print(text_surface)
         screen.blit(text_surface, (start_pointx, start_pointy))
 
     def draw(self, screen):

@@ -40,7 +40,7 @@ class Player:
         self.target_y = self.y
         self.target_px, self.target_py = self.maze.cell_to_pixel(self.x, self.y)
 
-    def update(self, deltatime, game):
+    def update(self, deltatime, game, ghosts):
         step = self.speed * self.maze.cell_size * deltatime
         dx = self.target_px - self.px
         dy = self.target_py - self.py
@@ -56,6 +56,10 @@ class Player:
                 pass
             if self.eat_super_pacgum(self.x, self.y):
                 game.score += game.points_per_super_pacgum
+                for ghost in ghosts:
+                    ghost.timer1 = 0
+                    ghost.timer2 = 0
+                    ghost.start_to_return = False
                 self.power = True
                 pass
 

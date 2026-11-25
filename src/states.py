@@ -131,7 +131,7 @@ class PlayingState:
         while self._handle_playing_events():
             deltatime = clock.tick(FPS) / 1000
 
-            self.player.update(deltatime, game)
+            self.player.update(deltatime, game, self.ghosts)
             for ghost in self.ghosts:
                 self.update(deltatime, ghost, self.player, game)
 

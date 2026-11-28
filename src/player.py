@@ -31,6 +31,7 @@ class Player:
         self.index = 0
 
         self.power = False
+        self.invesible = False
 
     def revive(self):
         self.x = self.default_x

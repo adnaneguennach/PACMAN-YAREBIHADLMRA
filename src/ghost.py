@@ -180,48 +180,6 @@ class Ghost:
         self.eaten = False
         self.player_detectet_in_zone = False
 
-    # def update(self, deltatime, player: Player, game):
-    #     Tools.check_player_in_zone(self, player)
-
-    #     if self.eaten:
-    #         self.to_start_and_freez(deltatime)
-    #         self.dead_timer += deltatime
-    #         if self.dead_timer >= 6:
-    #             self.revive()
-    #     else:
-    #         if Tools._touching_player(self, player):
-    #             if player.power:
-    #                 game.score += game.points_per_ghost 
-    #                 self.eaten = True
-    #                 return
-    #             elif game.lives - 1 > 0:
-    #                 game.lives -= 1
-    #                 player.revive()
-    #             else:
-    #                 print(game.lives)
-    #                 print("loser")
-    #                 exit()
-
-    #         if self.player_detectet_in_zone and not player.power:
-    #             self.chassing(deltatime, player)
-    #         elif self.player_detectet_in_zone and player.power:
-    #             self.running(deltatime, player, game)
-    #         else:
-    #             self.random_move(deltatime, player)
-    #     if player.power:
-    #         self.timer1 += deltatime
-    #         self.timer2 += deltatime
-    #         if self.timer2 >= 4.5:
-    #             self.timer2 = 0.0
-    #             self.start_to_return = True
-    #         if self.timer1 >= 6:
-    #             self.timer1 = 0.0
-    #             player.power = False
-    #     else:
-    #         self.start_to_return = False
-    #         self.timer1 = 0.0
-    #         self.timer2 = 0.0
-
     def normal_mode(self, screen, ghost_png):
         self.spirite = pygame.image.load(ghost_png)
         self.spirite = pygame.transform.scale(

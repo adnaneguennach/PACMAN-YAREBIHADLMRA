@@ -20,6 +20,9 @@ KEY_TO_DIRECTION = {
     pygame.K_s: SOUTH,
     pygame.K_a: WEST,
 }
+CHEAT_MODE = {
+    pygame.K_m: "invesible"
+}
 GHOST_COLORS = ("red", "pink", "blue", "orange")
 
 
@@ -43,7 +46,7 @@ class PlayingState:
         corners = self.maze.corners
         self.ghosts = [Ghost(x, y, 3, self.maze) for x, y in corners]
 
-    def revive_player(self, game):
+    def revive_player(self):
         player_x, player_y = self.maze.center
         self.player = Player(player_x, player_y, 4, self.maze)
 
@@ -70,7 +73,7 @@ class PlayingState:
 
         return False
 
-    def _handle_playing_events(self):
+    def _handle_playing_events(self, game):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
@@ -82,6 +85,24 @@ class PlayingState:
                 if event.key in KEY_TO_DIRECTION:
                     self.player.next_dir = KEY_TO_DIRECTION[event.key]
 
+
+
+
+
+                # hado cheat mode zid lihom annimation f display
+                if event.key == pygame.K_m:
+                    self.player.invesible = True
+                if event.key == pygame.K_k:
+                    self.player.speed += 1
+                if event.key == pygame.K_l:
+                    if self.player.speed > 1:
+                        self.player.speed -= 1
+                if event.key == pygame.K_o:
+                    if game.level_rank < len(game.config["levels"]) - 1 :
+                        game.level_rank += 1
+                        game.lives = game.mount_lives
+                        self.init_playing(game)
+                    
         return True
 
     def update(self, deltatime, ghost: Ghost, player: Player, game):
@@ -94,13 +115,15 @@ class PlayingState:
                 ghost.revive()
         else:
             if Tools._touching_player(ghost, player):
-                if player.power:
+                if player.invesible:
+                    pass
+                elif player.power:
                     game.score += game.points_per_ghost
                     ghost.eaten = True
                     return
                 elif game.lives - 1 > 0:
                     game.lives -= 1
-                    self.revive_player(game)
+                    self.revive_player()
                 else:
                     print(game.lives)
                     print("loser")
@@ -128,7 +151,7 @@ class PlayingState:
 
     def play(self, game):
         clock = pygame.time.Clock()
-        while self._handle_playing_events():
+        while self._handle_playing_events(game):
             deltatime = clock.tick(FPS) / 1000
 
             self.player.update(deltatime, game, self.ghosts)
@@ -136,12 +159,15 @@ class PlayingState:
                 self.update(deltatime, ghost, self.player, game)
 
             if self.check_win:
-                if game.level_rank < len(game.config["levels"]):
+                if game.level_rank < len(game.config["levels"]) - 1 :
                     game.level_rank += 1
                     game.lives = game.mount_lives
                     self.init_playing(game)
                 else:
+
+                    # hna fin kan7ado lgame t9ad tzid chi 7aja
                     exit()
+
             self._draw(deltatime, game)
 
         pygame.quit()
